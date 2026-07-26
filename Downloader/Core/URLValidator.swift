@@ -10,6 +10,11 @@ enum URLValidator {
 
         if let url = normalizedHTTPURL(trimmed) { return url }
         guard !trimmed.contains("://"), trimmed.contains("."), !trimmed.hasPrefix(".") else { return nil }
+        // Rechaza strings que ya contienen un scheme URI (incluso de un solo colon, ej. mailto:, tel:, sms:)
+        // El patrón omite "." para no rechazar puertos como "example.com:8080"
+        if trimmed.range(of: "^[A-Za-z][A-Za-z0-9+-]*:", options: .regularExpression) != nil {
+            return nil
+        }
         return normalizedHTTPURL("https://" + trimmed)
     }
 

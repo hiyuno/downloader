@@ -120,8 +120,10 @@ struct SettingsView: View {
     }
 }
 
-/// Pill de 28pt. `.glass` en macOS 26+, `.bordered` antes — mismo `#available`
+/// Pill de 28pt. `.glass` en macOS 26+, `.thinMaterial` antes — mismo `#available`
 /// pattern que el fondo del panel, sin dispersar checks de versión.
+/// Ver DESIGN_FROST.md > Decisiones registradas: material translúcido, no fill plano —
+/// coherente con la tabla de compatibilidad de Jonny (botón secundario → `.thinMaterial`).
 private struct DownloaderButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         if #available(macOS 26, *) {
@@ -136,10 +138,8 @@ private struct DownloaderButtonStyle: ButtonStyle {
                 .scaledFont(size: 13, weight: .regular)
                 .padding(.horizontal, 12)
                 .frame(height: 28)
-                .background(
-                    RoundedRectangle(cornerRadius: Theme.Radius.pill, style: .continuous)
-                        .fill(Color.primary.opacity(configuration.isPressed ? 0.16 : 0.08))
-                )
+                .background(.thinMaterial, in: RoundedRectangle(cornerRadius: Theme.Radius.pill, style: .continuous))
+                .opacity(configuration.isPressed ? 0.7 : 1)
         }
     }
 }

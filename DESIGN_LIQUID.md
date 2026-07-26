@@ -347,6 +347,29 @@ Fuerza Reduce Transparency ON (ya cubierto arriba) y además: el borde del panel
 | 2026-07-26 | Menu bar: ring de progreso redibujado por threshold (≥2pp o 400ms), no en cada tick | `NSStatusItem` no anima gratis (nota de Avie) — redibujar un `NSImage` en cada tick del parser (~1/seg puede ser más frecuente en descargas rápidas) desperdicia CPU en algo que el usuario mira de reojo |
 | 2026-07-26 | Ícono de menu bar prioriza error > descargando > idle cuando hay múltiples descargas | El usuario necesita saber que algo falló sin tener que abrir el panel; el progreso de las que sí van bien se ve al abrir |
 | 2026-07-26 | Corregida tabla de alturas (doble conteo de panelPadding) | Detectado por Woz al aplicar review de Larry; el layout real usa 8pt entre input y lista |
+| 2026-07-26 | Ícono de sitio en el input (`LauncherView`, frame 16×16) se mantiene a **13pt**, no se sube a 16pt como propuso Larry en review | El frame de 16×16 es una caja de alineación compartida (`Theme.Size.siteIcon`, reusada en Settings para íconos de 16×16), no una instrucción de "llena el cuadro". 13pt es el mismo tamaño de símbolo que usa `DownloadRowView` (que tampoco fuerza el símbolo al tamaño de su frame de 20pt) y empareja ópticamente con el badge "sitio detectado" de 12pt Medium que aparece junto al ícono — son la misma familia de metadata visual. Subir a 16pt (ratio 1:1 con el frame) rompería esa consistencia y, para símbolos con arte más ancho, puede desbordar ópticamente el frame en vez de quedar bien inscrito — un símbolo a `size: 16` no siempre cabe con margen dentro de una caja de 16pt, mientras que un ratio símbolo:frame de ~0.8 (13/16) es el que produce el inset correcto que ya usa el resto de la app. |
+
+---
+
+## Ícono de app
+
+**Concepto:** flecha hacia una bandeja — el glifo universal de "descargar" (el mismo lenguaje que el ícono de descargas de cualquier navegador), sin texto ni logotipo. Coherente con la identidad de la app ("instantánea, silenciosa, utilitaria"): el ícono comunica la única acción que la app hace, nada más.
+
+**Geometría (canvas 1024×1024, grid de ícono macOS Big Sur+):**
+- Squircle de fondo: superelipse (aproximación de continuous corner, exponente 5), ocupa el 82.4% del canvas (≈844×844pt), centrado — sigue el grid oficial de Apple para íconos de macOS, no un cuadrado con esquinas circulares.
+- Glifo centrado dentro del squircle, escalado al 72% del squircle (≈607pt): tallo vertical rematado en semicírculo + cabeza triangular con la punta redondeada (radio 9pt en un sistema lógico de 100pt) + una bandeja en forma de cápsula debajo, separada por un espacio — no es solo una flecha suelta, la bandeja ancla visualmente el gesto de "aterrizar/guardar".
+- Sombra suave debajo del glifo (offset y blur proporcionales al canvas) para separarlo del fondo sin verse pegado.
+
+**Colores exactos:**
+- Gradiente de fondo, diagonal (esquina superior-izquierda → inferior-derecha): `#3B82F6` (azul, arriba) → `#0891B2` (cian, abajo) — paleta "stream/red", distinta del `Color.accentColor` neutro que usa el resto de la app (el ícono es la única superficie de la app con identidad de color propia; ver Color > Colores custom, que sigue en "ninguno" para la UI interna).
+- Glifo (flecha + bandeja): blanco `#FFFFFF` al 96% de opacidad.
+- Gloss superior: radial blanco al 22% de opacidad desvaneciendo a 0%, centrado en el tercio superior del squircle — separación especular sutil, no un brillo iOS plano.
+- Sombra interior inferior: gradiente negro de 0% a 16% de opacidad en el tercio inferior — ancla el squircle ópticamente, evita que se vea flotando sin peso.
+- Sombra del glifo: negro al 35% de opacidad, blur y offset proporcionales al canvas.
+
+**Por qué esta paleta y no gris/monocromo como el ícono de menu bar:** el ícono de menu bar es template (monocromo, se re-tinta con el sistema) porque vive dentro del chrome de macOS y debe mimetizarse — regla ya registrada en "Menu bar". El ícono de app vive en Dock/Finder/App Switcher, junto a íconos de otras apps con colores propios; ahí sí necesita una identidad de color reconocible a simple vista, aunque la UI interna de la app deliberadamente no tenga una.
+
+**Generación:** script Swift (`CoreGraphics`/`AppKit`, sin dependencias) que dibuja la superelipse y el glifo como `CGPath` vectoriales y rasteriza cada tamaño requerido directamente a su resolución final (no downscaling de un solo master), para AA nítido en 16pt tanto como en 1024pt. Archivos en `Downloader/Resources/Assets.xcassets/AppIcon.appiconset/`.
 
 ---
 

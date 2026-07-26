@@ -42,6 +42,10 @@ struct LauncherView: View {
     private var inputRow: some View {
         HStack(spacing: Theme.Spacing.iconToText) {
             if let site = viewModel.detectedSite {
+                // 13pt intencional, no 16 (= frame): empareja con el badge "sitio
+                // detectado" (12pt Medium) y con el resto de íconos de la app
+                // (DownloadRowView usa el mismo ~13pt en frames más grandes). Ver
+                // DESIGN_LIQUID.md > Decisiones registradas.
                 Image(systemName: site.symbolName)
                     .font(.system(size: 13, weight: .regular))
                     .foregroundStyle(site.isRecognized ? Color.accentColor : .orange)
