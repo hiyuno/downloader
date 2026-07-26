@@ -1,0 +1,22 @@
+# Repos clonados de referencia (no forman parte de la app)
+AppleAppLab/
+skills/
+
+# macOS
+.DS_Store
+
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+*.moved-aside
+
+# Binarios embebidos (se descargan con Scripts/embed_binaries.sh — ver Downloader/Resources/bin/README.md)
+Downloader/Resources/bin/yt-dlp
+Downloader/Resources/bin/ffmpeg
+
+# Swift PM
+.build/
+.swiftpm/

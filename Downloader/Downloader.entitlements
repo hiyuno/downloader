@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+      SIN App Sandbox — decisión del PRD (distribución directa, yt-dlp empaquetado,
+      apertura de archivos en apps de terceros). No se incluye
+      com.apple.security.app-sandbox en absoluto.
+
+      Hardened Runtime está activado a nivel de proyecto (ENABLE_HARDENED_RUNTIME=YES).
+      La excepción de abajo es la que necesita el binario yt-dlp construido con
+      PyInstaller (TRD §5 "Empaquetado y firma"). Si se cambia a un yt-dlp que no la
+      requiera, quítala: el notary service premia el set mínimo.
+    -->
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+</dict>
+</plist>

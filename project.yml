@@ -1,0 +1,74 @@
+name: Downloader
+options:
+  bundleIdPrefix: com.appleapplab
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "26"
+  swift: "6.0"
+  groupSortPosition: top
+  generateEmptyDirectories: true
+  transitivelyLinkDependencies: true
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
+    DEAD_CODE_STRIPPING: YES
+    ENABLE_HARDENED_RUNTIME: YES
+    # Firma: ad-hoc para poder compilar sin Team ID.
+    # Para notarizar: CODE_SIGN_STYLE=Automatic + DEVELOPMENT_TEAM=<TeamID>
+    # y CODE_SIGN_IDENTITY="Developer ID Application".
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "-"
+    DEVELOPMENT_TEAM: ""
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+  configs:
+    Debug:
+      SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+      SWIFT_COMPILATION_MODE: singlefile
+    Release:
+      SWIFT_OPTIMIZATION_LEVEL: "-Osize"
+      SWIFT_COMPILATION_MODE: wholemodule
+
+targets:
+  Downloader:
+    type: application
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: Downloader
+        excludes:
+          - "Resources/bin/**"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.appleapplab.Downloader
+        INFOPLIST_FILE: Downloader/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Downloader/Downloader.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        COMBINE_HIDPI_IMAGES: YES
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
+    postCompileScripts:
+      - name: "Embed & Sign yt-dlp / ffmpeg"
+        script: |
+          "${SRCROOT}/Scripts/embed_binaries.sh"
+        basedOnDependencyAnalysis: false
+    scheme:
+      testTargets:
+        - DownloaderTests
+
+  DownloaderTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - DownloaderTests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.appleapplab.DownloaderTests
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: Downloader
