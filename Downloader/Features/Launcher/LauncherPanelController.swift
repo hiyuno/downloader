@@ -18,6 +18,7 @@ final class LauncherPanelController: NSObject, NSWindowDelegate {
         hostingView.autoresizingMask = [.width, .height]
         panel.contentView = hostingView
         panel.delegate = self
+        panel.setAccessibilityLabel("Downloader")
 
         viewModel.onHeightChange = { [weak self] height in
             self?.resize(to: height)
@@ -100,7 +101,14 @@ final class LauncherPanelController: NSObject, NSWindowDelegate {
         }
         NSAnimationContext.runAnimationGroup { context in
             context.duration = Theme.Motion.heightChangeDuration
-            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            // NSWindow's frame animator only accepts a CAMediaTimingFunction (cubic
+            // Bézier), not a real CASpringAnimation — window frame resizing isn't a
+            // layer property, so there's no implicit-animation hook to attach a spring
+            // to. This control-point curve approximates DESIGN_LIQUID's
+            // spring(response: 0.35, dampingFraction: 1.0): steep initial acceleration,
+            // no overshoot (critically damped), settling by ~280ms — the same shape
+            // SwiftUI's spring produces for the in-panel content (see Theme.Motion.heightChange).
+            context.timingFunction = CAMediaTimingFunction(controlPoints: 0.16, 1.0, 0.3, 1.0)
             panel.animator().setFrame(target, display: true)
         }
     }

@@ -22,7 +22,7 @@ enum Theme {
         static let rowHorizontalPadding: CGFloat = 12
         static let iconToText: CGFloat = 10
         static let inputToChip: CGFloat = 6
-        static let chipHeight: CGFloat = 16
+        static let chipHeight: CGFloat = 22
         static let settingsSectionPadding: CGFloat = 16
         static let betweenSettingsSections: CGFloat = 20
         static let minimumTapTarget: CGFloat = 32

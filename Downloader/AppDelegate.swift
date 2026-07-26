@@ -30,6 +30,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Logger.ytdlp.error("yt-dlp no está empaquetado — ver Resources/bin/README.md")
         }
         Task { await YTDLPUpdateService.shared.check() }
+
+        // Instrumentación de debug: permite verificar la ventana de Settings sin
+        // pantalla, disparando la apertura 1s después de arrancar (ver skill de QA).
+        if CommandLine.arguments.contains("--open-settings") {
+            Logger.settings.notice("--open-settings detectado — abriendo en 1s")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                SettingsWindowController.shared.openSettings()
+            }
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -42,7 +51,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func setUpStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         statusItem.button?.image = MenuBarIconRenderer.image(for: .idle)
-        statusItem.button?.toolTip = "Downloader"
+        statusItem.button?.toolTip = "Downloader — clic para abrir el launcher (⌥⌘Space)"
         statusItem.menu = buildMenu()
     }
 
@@ -147,9 +156,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func openSettings() {
-        NSApp.activate(ignoringOtherApps: true)
-        if #available(macOS 14, *) {
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-        }
+        Logger.settings.notice("menu item \"Ajustes…\" clickeado")
+        SettingsWindowController.shared.openSettings()
     }
 }

@@ -17,7 +17,7 @@ struct LauncherView: View {
             }
 
             if !viewModel.activeDownloads.isEmpty {
-                Spacer().frame(height: Theme.Spacing.panelPadding + Theme.Spacing.inputToList)
+                Spacer().frame(height: Theme.Spacing.inputToList)
                 downloadList
             }
         }
@@ -46,6 +46,7 @@ struct LauncherView: View {
                     .font(.system(size: 13, weight: .regular))
                     .foregroundStyle(site.isRecognized ? Color.accentColor : .orange)
                     .frame(width: Theme.Size.siteIcon, height: Theme.Size.siteIcon)
+                    .accessibilityLabel(site.displayName)
                     .transition(.opacity)
             }
 
@@ -59,7 +60,7 @@ struct LauncherView: View {
 
             if let site = viewModel.detectedSite, site.isRecognized {
                 Text(site.displayName)
-                    .font(Theme.Font.siteBadge)
+                    .scaledFont(size: 12, weight: .medium)
                     .foregroundStyle(.secondary)
                     .transition(.opacity)
             }

@@ -16,6 +16,8 @@ xcuserdata/
 # Binarios embebidos (se descargan con Scripts/embed_binaries.sh — ver Downloader/Resources/bin/README.md)
 Downloader/Resources/bin/yt-dlp
 Downloader/Resources/bin/ffmpeg
+Downloader/Resources/bin/*.zip
+Downloader/Resources/bin/__MACOSX/
 
 # Swift PM
 .build/

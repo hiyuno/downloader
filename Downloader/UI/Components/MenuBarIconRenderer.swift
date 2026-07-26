@@ -13,20 +13,20 @@ enum MenuBarIconRenderer {
     static func image(for state: State) -> NSImage {
         switch state {
         case .idle:
-            symbol("arrow.down.circle")
+            symbol("arrow.down.circle", description: "Downloader — esperando descargas")
         case .error:
-            symbol("exclamationmark.circle")
+            symbol("exclamationmark.circle", description: "Downloader — error en descarga")
         case .downloading(let percent):
             progressRing(percent: percent)
         }
     }
 
-    private static func symbol(_ name: String) -> NSImage {
+    private static func symbol(_ name: String, description: String) -> NSImage {
         let configuration = NSImage.SymbolConfiguration(
             pointSize: Theme.Size.menuBarIcon,
             weight: .regular
         )
-        let image = NSImage(systemSymbolName: name, accessibilityDescription: "Downloader")?
+        let image = NSImage(systemSymbolName: name, accessibilityDescription: description)?
             .withSymbolConfiguration(configuration) ?? NSImage()
         image.isTemplate = true
         return image

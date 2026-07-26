@@ -49,7 +49,7 @@ final class LauncherViewModel {
         }
         if !activeDownloads.isEmpty {
             let rows = CGFloat(activeDownloads.count)
-            height += Theme.Spacing.panelPadding + Theme.Spacing.inputToList
+            height += Theme.Spacing.inputToList
             height += rows * Theme.Spacing.rowHeight + (rows - 1) * Theme.Spacing.betweenRows
         }
         return min(height, Theme.Size.panelMaxHeight)
@@ -60,7 +60,7 @@ final class LauncherViewModel {
         var height = Theme.Spacing.panelPadding * 2 + Theme.Spacing.inputRowHeight
         if chip != nil { height += Theme.Spacing.inputToChip + Theme.Spacing.chipHeight }
         let rows = CGFloat(activeDownloads.count)
-        height += Theme.Spacing.panelPadding + Theme.Spacing.inputToList
+        height += Theme.Spacing.inputToList
         height += rows * Theme.Spacing.rowHeight + (rows - 1) * Theme.Spacing.betweenRows
         return height > Theme.Size.panelMaxHeight
     }

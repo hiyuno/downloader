@@ -12,6 +12,13 @@ struct URLInputField: NSViewRepresentable {
     let onSubmit: () -> Void
     let onCancel: () -> Void
 
+    /// `NSTextField` no participa del entorno de Dynamic Type de SwiftUI, así que el
+    /// tamaño escalado se calcula acá y se aplica a mano al `NSFont`, con el mismo techo
+    /// de 1.3x que el resto del texto de la app (DESIGN_LIQUID §Tipografía).
+    @ScaledMetric(relativeTo: .body) private var scaledFontSize: CGFloat = 20
+
+    private var cappedFontSize: CGFloat { min(scaledFontSize, 20 * 1.3) }
+
     func makeNSView(context: Context) -> NSTextField {
         let field = FocusableTextField()
         field.delegate = context.coordinator
@@ -24,17 +31,22 @@ struct URLInputField: NSViewRepresentable {
         field.usesSingleLineMode = true
         field.cell?.wraps = false
         field.cell?.isScrollable = true
-        field.font = Self.inputFont
+        field.font = inputFont
         field.textColor = .labelColor
-        field.placeholderAttributedString = Self.placeholderString(placeholder)
+        field.placeholderAttributedString = placeholderString(placeholder)
         field.stringValue = text
+        field.setAccessibilityLabel("Ingresa URL de video")
+        field.setAccessibilityHelp("Presiona Enter para descargar, Escape para cerrar")
         return field
     }
 
     func updateNSView(_ field: NSTextField, context: Context) {
         if field.stringValue != text { field.stringValue = text }
-        if field.placeholderAttributedString?.string != placeholder {
-            field.placeholderAttributedString = Self.placeholderString(placeholder)
+        if field.font?.pointSize != cappedFontSize {
+            field.font = inputFont
+            field.placeholderAttributedString = placeholderString(placeholder)
+        } else if field.placeholderAttributedString?.string != placeholder {
+            field.placeholderAttributedString = placeholderString(placeholder)
         }
         guard context.coordinator.lastFocusToken != focusToken else { return }
         context.coordinator.lastFocusToken = focusToken
@@ -50,13 +62,13 @@ struct URLInputField: NSViewRepresentable {
         Coordinator(text: $text, onSubmit: onSubmit, onCancel: onCancel)
     }
 
-    private static var inputFont: NSFont {
-        let base = NSFont.systemFont(ofSize: 20, weight: .regular)
+    private var inputFont: NSFont {
+        let base = NSFont.systemFont(ofSize: cappedFontSize, weight: .regular)
         guard let descriptor = base.fontDescriptor.withDesign(.rounded) else { return base }
-        return NSFont(descriptor: descriptor, size: 20) ?? base
+        return NSFont(descriptor: descriptor, size: cappedFontSize) ?? base
     }
 
-    private static func placeholderString(_ value: String) -> NSAttributedString {
+    private func placeholderString(_ value: String) -> NSAttributedString {
         NSAttributedString(
             string: value,
             attributes: [

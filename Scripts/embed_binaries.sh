@@ -22,14 +22,32 @@ for tool in yt-dlp ffmpeg; do
   cp -f "${SOURCE_DIR}/${tool}" "${DEST_DIR}/${tool}"
   chmod +x "${DEST_DIR}/${tool}"
 
-  if [ "${CODE_SIGNING_ALLOWED:-YES}" = "YES" ] && [ -n "${EXPANDED_CODE_SIGN_IDENTITY:-}" ]; then
+  # Los binarios de terceros (yt-dlp/ffmpeg) llegan con su propia firma
+  # (ad-hoc o de su propio Team ID). Si no se elimina antes de re-firmar,
+  # el binario embebido queda con un Team ID distinto al del proceso que
+  # lo carga (nuestro .app), y dyld/AMFI lo rechaza en runtime:
+  #   "code signature not valid... different Team IDs".
+  # Solución: quitar siempre la firma original y volver a firmar con la
+  # MISMA identidad que usará el resto del bundle, sea ad-hoc ("-") o una
+  # identidad real de Developer ID/Distribution.
+  codesign --remove-signature "${DEST_DIR}/${tool}" 2>/dev/null || true
+
+  if [ "${CODE_SIGNING_ALLOWED:-YES}" = "YES" ]; then
+    # EXPANDED_CODE_SIGN_IDENTITY viene vacío cuando CODE_SIGN_IDENTITY="-"
+    # (ad-hoc), así que hay que caer de vuelta a "-" en ese caso en vez de
+    # saltarse la firma por completo.
+    sign_identity="${EXPANDED_CODE_SIGN_IDENTITY:-}"
+    if [ -z "${sign_identity}" ]; then
+      sign_identity="-"
+    fi
+
     codesign --force --options runtime --timestamp=none \
       --entitlements "${SRCROOT}/Downloader/Downloader.entitlements" \
-      --sign "${EXPANDED_CODE_SIGN_IDENTITY}" \
+      --sign "${sign_identity}" \
       "${DEST_DIR}/${tool}" \
       || echo "warning: no se pudo firmar ${tool}"
   else
-    echo "note: sin identidad de firma — ${tool} queda sin firmar (no notarizable)"
+    echo "note: firma deshabilitada (CODE_SIGNING_ALLOWED=NO) — ${tool} queda sin firmar"
   fi
 done
 

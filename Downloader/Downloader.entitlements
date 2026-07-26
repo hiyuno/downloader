@@ -14,5 +14,19 @@
     -->
     <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
     <true/>
+
+    <!--
+      El bootloader de PyInstaller (yt-dlp onefile) extrae su Python.framework
+      embebido a un directorio temporal en cada ejecución, con la firma que
+      tenía al momento de construir yt-dlp (ad-hoc o de un Team ID ajeno al
+      nuestro). Aunque re-firmamos el binario yt-dlp al empotrarlo, esa firma
+      NO se propaga al payload que se extrae en runtime, así que el Hardened
+      Runtime rechaza el dlopen del Python extraído con:
+        "code signature ... not valid ... different Team IDs"
+      La única forma de permitirlo sin re-firmar el .framework extraído en
+      cada arranque es desactivar la validación de librerías dinámicas.
+    -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
 </dict>
 </plist>

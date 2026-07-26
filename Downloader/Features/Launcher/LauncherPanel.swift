@@ -6,7 +6,7 @@ final class LauncherPanel: NSPanel {
     init() {
         super.init(
             contentRect: NSRect(x: 0, y: 0, width: Theme.Size.panelWidth, height: 76),
-            styleMask: [.nonactivatingPanel, .titled, .fullSizeContentView],
+            styleMask: [.nonactivatingPanel, .titled, .fullSizeContentView, .borderless],
             backing: .buffered,
             defer: false
         )

@@ -12,6 +12,7 @@
 		1F000F18ECC6AED3F1873DD6 /* GlassBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF81BD5102C5EF503E5D449 /* GlassBackground.swift */; };
 		20095973F32F15584F86A96E /* LauncherViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570F5261831170DD422DDD95 /* LauncherViewModel.swift */; };
 		24F4CD0393B2AB3012B54597 /* DownloadProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = F66B79DDF251481C3346201F /* DownloadProgress.swift */; };
+		2630FD8D509CAD9BE9831FF2 /* ScaledFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA1BD4902CAA1ACF0EF1E812 /* ScaledFont.swift */; };
 		2DAA8083CF94B48BEB1E3607 /* URLValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA57A3C7B41A11CFC12AF617 /* URLValidator.swift */; };
 		38718D692EBB351903F81018 /* BundledBinaries.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA4185B66A1CF8DD5C03ED17 /* BundledBinaries.swift */; };
 		4E159631461EFECB98C381C6 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F05A6E1852C1A0F39849AE8 /* SettingsViewModel.swift */; };
@@ -39,6 +40,7 @@
 		D9C38006B928C9E17F0CCDFD /* DownloadTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8177F0A9FD9F1F800775B4E0 /* DownloadTask.swift */; };
 		DCD2DA7742A12D0942543661 /* Logger+Downloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDCCFC813A8F6ED092B82C88 /* Logger+Downloader.swift */; };
 		E6A504CFAEC6FEE0FC8A7767 /* URLInputField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B2F6C4EF0A0FB6D19FB9D52 /* URLInputField.swift */; };
+		E83ECF7F532D87783030C2C4 /* SettingsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EF3A11F87120B94C36C5D36 /* SettingsWindowController.swift */; };
 		E9FAE15BD464D16709914DCA /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07D44497DF4505450F8D75E1 /* NotificationService.swift */; };
 		F015C9AEC59BCCA1F3AE2E17 /* MenuBarIconRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6226884B355C04D0823274C8 /* MenuBarIconRenderer.swift */; };
 		F351FFEA45967B7E4BF5F8F5 /* FileOpenerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450E53ED85DC12C37F60C2EA /* FileOpenerService.swift */; };
@@ -69,6 +71,7 @@
 		4FE5E616387CD1D38810F872 /* LauncherPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LauncherPanel.swift; sourceTree = "<group>"; };
 		570F5261831170DD422DDD95 /* LauncherViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LauncherViewModel.swift; sourceTree = "<group>"; };
 		5E84C2699F23DD13CF33BA73 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		5EF3A11F87120B94C36C5D36 /* SettingsWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowController.swift; sourceTree = "<group>"; };
 		5FF81BD5102C5EF503E5D449 /* GlassBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassBackground.swift; sourceTree = "<group>"; };
 		6226884B355C04D0823274C8 /* MenuBarIconRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarIconRenderer.swift; sourceTree = "<group>"; };
 		70ECD869C4B9D3DE339C5E13 /* ProgressPill.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressPill.swift; sourceTree = "<group>"; };
@@ -89,6 +92,7 @@
 		D04661A14CF17BEEE9811C90 /* HotkeyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyService.swift; sourceTree = "<group>"; };
 		D47B6A3E3FB50B037A44FF47 /* AppSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsTests.swift; sourceTree = "<group>"; };
 		D5469894D546D03CD933A068 /* LauncherPanelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LauncherPanelController.swift; sourceTree = "<group>"; };
+		EA1BD4902CAA1ACF0EF1E812 /* ScaledFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScaledFont.swift; sourceTree = "<group>"; };
 		EA4185B66A1CF8DD5C03ED17 /* BundledBinaries.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundledBinaries.swift; sourceTree = "<group>"; };
 		EA57A3C7B41A11CFC12AF617 /* URLValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLValidator.swift; sourceTree = "<group>"; };
 		EDE74821D94F506AC8531F3F /* ClipboardService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardService.swift; sourceTree = "<group>"; };
@@ -146,6 +150,7 @@
 			children = (
 				5B0D2D2B2CA71EC43F7C9DA0 /* Components */,
 				5FF81BD5102C5EF503E5D449 /* GlassBackground.swift */,
+				EA1BD4902CAA1ACF0EF1E812 /* ScaledFont.swift */,
 				34D26EABAA25EE456168FA7D /* Theme.swift */,
 			);
 			path = UI;
@@ -215,6 +220,7 @@
 				9CFC5FDEDC126AD372AB7851 /* AppPickerView.swift */,
 				B5FE3EC0180B20BEC7546406 /* SettingsView.swift */,
 				4F05A6E1852C1A0F39849AE8 /* SettingsViewModel.swift */,
+				5EF3A11F87120B94C36C5D36 /* SettingsWindowController.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -388,8 +394,10 @@
 				F015C9AEC59BCCA1F3AE2E17 /* MenuBarIconRenderer.swift in Sources */,
 				E9FAE15BD464D16709914DCA /* NotificationService.swift in Sources */,
 				C45F47A9C178D3756567AF27 /* ProgressPill.swift in Sources */,
+				2630FD8D509CAD9BE9831FF2 /* ScaledFont.swift in Sources */,
 				63F303F17355912DD3062DAE /* SettingsView.swift in Sources */,
 				4E159631461EFECB98C381C6 /* SettingsViewModel.swift in Sources */,
+				E83ECF7F532D87783030C2C4 /* SettingsWindowController.swift in Sources */,
 				7AFCDCD7E87C4966DB02F4EF /* SupportedSite.swift in Sources */,
 				93961B65F65889EE6BFF6C3B /* Theme.swift in Sources */,
 				E6A504CFAEC6FEE0FC8A7767 /* URLInputField.swift in Sources */,

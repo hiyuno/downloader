@@ -25,7 +25,7 @@ struct InlineChip: View {
             Image(systemName: symbolName)
                 .font(.system(size: 11, weight: .medium))
             Text(text)
-                .font(Theme.Font.chip)
+                .scaledFont(size: 11, weight: .regular)
         }
         .foregroundStyle(kind.tint)
         .padding(.horizontal, 8)
@@ -36,6 +36,14 @@ struct InlineChip: View {
         )
         .accessibilityElement(children: .combine)
         .accessibilityLabel(text)
+        .accessibilityValue(accessibilityValueText)
+    }
+
+    private var accessibilityValueText: String {
+        switch kind {
+        case .warning: "Aviso"
+        case .error: "Error"
+        }
     }
 }
 

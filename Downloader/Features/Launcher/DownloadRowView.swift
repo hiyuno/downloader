@@ -19,12 +19,12 @@ struct DownloadRowView: View {
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(task.displayTitle)
-                    .font(Theme.Font.rowTitle)
+                    .scaledFont(size: 13, weight: .regular)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                     .truncationMode(.middle)
                 Text(subtitle)
-                    .font(Theme.Font.rowSubtitle)
+                    .scaledFont(size: 11, weight: .regular)
                     .foregroundStyle(subtitleColor)
                     .lineLimit(1)
                     .id(subtitle)
@@ -45,7 +45,22 @@ struct DownloadRowView: View {
         .animation(Theme.Motion.rowStateCrossfade, value: iconID)
         .animation(Theme.Motion.rowStateCrossfade, value: subtitle)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(task.displayTitle). \(subtitle)")
+        .accessibilityLabel(accessibilityStateLabel)
+    }
+
+    private var accessibilityStateLabel: String {
+        let state: String
+        switch task.state {
+        case .queued:
+            state = "En cola"
+        case .downloading(let percent, _, _):
+            state = "Descargando \(Int(percent * 100)) por ciento"
+        case .completed:
+            state = "Completado"
+        case .failed(let reason):
+            state = "Falló: \(reason.message)"
+        }
+        return "\(task.displayTitle). \(state)"
     }
 
     // MARK: - Estados
@@ -103,20 +118,18 @@ struct DownloadRowView: View {
         case .downloading(let percent, _, _):
             ProgressPill(percent: percent)
         case .completed(let fileURL):
-            if isHovering {
-                Button {
-                    onReveal(fileURL)
-                } label: {
-                    Image(systemName: "folder")
-                        .font(.system(size: 12, weight: .regular))
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(.secondary)
-                .frame(width: Theme.Spacing.minimumTapTarget, height: Theme.Spacing.minimumTapTarget)
-                .contentShape(Rectangle())
-                .accessibilityLabel("Mostrar en Finder")
-                .transition(.opacity)
+            Button {
+                onReveal(fileURL)
+            } label: {
+                Image(systemName: "folder")
+                    .font(.system(size: 12, weight: .regular))
             }
+            .buttonStyle(.plain)
+            .foregroundStyle(.secondary)
+            .frame(width: Theme.Spacing.minimumTapTarget, height: Theme.Spacing.minimumTapTarget)
+            .contentShape(Rectangle())
+            .opacity(isHovering ? 1 : 0)
+            .accessibilityLabel("Mostrar \(task.displayTitle) en Finder")
         case .queued, .failed:
             EmptyView()
         }

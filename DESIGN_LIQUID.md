@@ -169,8 +169,8 @@ struct GlassPanelBackground: ViewModifier {
 | Vacío (solo input, sin clipboard detectado) | 76pt (12 padding + 52 input + 12 padding) |
 | Link pegado / detectado, sitio reconocido | 76pt (badge de sitio vive inline en el input, no agrega alto) |
 | Link pegado, sitio no reconocido | 76pt + 22pt (chip de advertencia) = 98pt |
-| 1 descarga activa | 76 + 8 (spacing) + 48 (fila) + 12 (padding inferior) = 144pt |
-| N descargas activas | 76 + 8 + N×(48+4) − 4 + 12, hasta un máximo de **420pt** |
+| 1 descarga activa | 12 (padding) + 52 (input) + 8 (spacing) + 48 (fila) + 12 (padding) = 132pt |
+| N descargas activas | 76 + 8 + N×(48+4) − 4, hasta un máximo de **420pt** |
 | Más filas de las que caben en 420pt | la lista de filas se vuelve un `ScrollView` interno; el panel deja de crecer |
 
 El ancho **nunca** cambia — solo el alto. Esto evita que el panel "salte" horizontalmente y rompa la posición centrada calculada al abrir (TRD sección 2: centrado en la pantalla del cursor).
@@ -346,6 +346,7 @@ Fuerza Reduce Transparency ON (ya cubierto arriba) y además: el borde del panel
 | 2026-07-26 | "Sitio no reconocido" es un chip inline en el input, no una fila ni un `DownloadState` | Ocurre antes del submit, es puramente informativo y no bloqueante — mezclarlo con los 4 estados de `DownloadState` (que sí representan el ciclo de vida de una descarga real) confundiría el modelo |
 | 2026-07-26 | Menu bar: ring de progreso redibujado por threshold (≥2pp o 400ms), no en cada tick | `NSStatusItem` no anima gratis (nota de Avie) — redibujar un `NSImage` en cada tick del parser (~1/seg puede ser más frecuente en descargas rápidas) desperdicia CPU en algo que el usuario mira de reojo |
 | 2026-07-26 | Ícono de menu bar prioriza error > descargando > idle cuando hay múltiples descargas | El usuario necesita saber que algo falló sin tener que abrir el panel; el progreso de las que sí van bien se ve al abrir |
+| 2026-07-26 | Corregida tabla de alturas (doble conteo de panelPadding) | Detectado por Woz al aplicar review de Larry; el layout real usa 8pt entre input y lista |
 
 ---
 
