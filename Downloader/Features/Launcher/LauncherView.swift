@@ -70,8 +70,14 @@ struct LauncherView: View {
     private var downloadList: some View {
         let rows = VStack(spacing: Theme.Spacing.betweenRows) {
             ForEach(viewModel.activeDownloads) { task in
-                DownloadRowView(task: task, onReveal: FileOpenerService.revealInFinder)
-                    .transition(.opacity)
+                DownloadRowView(
+                    task: task,
+                    onReveal: FileOpenerService.revealInFinder,
+                    onOpenInApp: { fileURL in
+                        Task { await FileOpenerService.openIfConfigured(fileURL) }
+                    }
+                )
+                .transition(.opacity)
             }
         }
 

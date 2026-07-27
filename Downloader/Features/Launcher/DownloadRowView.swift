@@ -6,6 +6,7 @@ import SwiftUI
 struct DownloadRowView: View {
     let task: DownloadTask
     var onReveal: (URL) -> Void = { _ in }
+    var onOpenInApp: (URL) -> Void = { _ in }
 
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @State private var isHovering = false
@@ -141,21 +142,47 @@ struct DownloadRowView: View {
                 ProgressRing(percent: percent)
             }
         case .completed(let fileURL):
-            Button {
-                onReveal(fileURL)
-            } label: {
-                Image(systemName: "folder")
-                    .font(.system(size: 12, weight: .regular))
+            HStack(spacing: Theme.Spacing.betweenRowAccessories) {
+                if let destinationAppIcon {
+                    Button {
+                        onOpenInApp(fileURL)
+                    } label: {
+                        Image(nsImage: destinationAppIcon)
+                            .resizable()
+                            .frame(width: Theme.Size.rowAccessoryIcon, height: Theme.Size.rowAccessoryIcon)
+                    }
+                    .buttonStyle(.plain)
+                    .frame(width: Theme.Spacing.minimumTapTarget, height: Theme.Spacing.minimumTapTarget)
+                    .contentShape(Rectangle())
+                    .accessibilityLabel("Abrir \(task.displayTitle) en \(destinationAppName ?? "app destino")")
+                }
+
+                Button {
+                    onReveal(fileURL)
+                } label: {
+                    Image(systemName: "folder")
+                        .font(.system(size: Theme.Size.rowAccessoryIcon, weight: .regular))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .frame(width: Theme.Spacing.minimumTapTarget, height: Theme.Spacing.minimumTapTarget)
+                .contentShape(Rectangle())
+                .accessibilityLabel("Mostrar \(task.displayTitle) en Finder")
             }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
-            .frame(width: Theme.Spacing.minimumTapTarget, height: Theme.Spacing.minimumTapTarget)
-            .contentShape(Rectangle())
             .opacity(isHovering ? 1 : 0)
-            .accessibilityLabel("Mostrar \(task.displayTitle) en Finder")
         case .queued, .failed:
             EmptyView()
         }
+    }
+
+    private var destinationAppIcon: NSImage? {
+        guard let bundleID = AppSettings.destinationAppBundleID, !bundleID.isEmpty else { return nil }
+        return FileOpenerService.icon(forBundleIdentifier: bundleID)
+    }
+
+    private var destinationAppName: String? {
+        guard let bundleID = AppSettings.destinationAppBundleID, !bundleID.isEmpty else { return nil }
+        return FileOpenerService.name(forBundleIdentifier: bundleID)
     }
 
     private var rowFill: Color {

@@ -26,6 +26,7 @@ enum Theme {
         static let settingsSectionPadding: CGFloat = 16
         static let betweenSettingsSections: CGFloat = 20
         static let minimumTapTarget: CGFloat = 32
+        static let betweenRowAccessories: CGFloat = 2
     }
 
     enum Size {
@@ -36,6 +37,7 @@ enum Theme {
         static let progressRing: CGFloat = 18
         static let progressRingLineWidth: CGFloat = 2
         static let menuBarIcon: CGFloat = 18
+        static let rowAccessoryIcon: CGFloat = 12
         static let settings = CGSize(width: 480, height: 360)
     }
 

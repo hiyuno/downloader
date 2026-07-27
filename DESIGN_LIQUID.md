@@ -199,7 +199,7 @@ El ancho **nunca** cambia — solo el alto. Esto evita que el panel "salte" hori
 |---|---|---|---|---|---|---|
 | `.queued` | `clock` | `.secondary` | Nombre de archivo estimado o "Preparando…" | (vacío — sin subtítulo en este estado) | — | `Color.primary.opacity(0.04)` |
 | `.downloading(percent, speed, eta)` | `arrow.down.circle` | `Color.accentColor` | Título del video | (vacío — sin subtítulo en este estado) | "99%" (11pt `.white` monospacedDigit) + Ring de progreso circular (18pt, blanco), alineados horizontalmente, spacing 4pt entre texto y ring | `Color.primary.opacity(0.04)` |
-| `.completed(fileURL)` | `checkmark.circle.fill` | `.green` | Nombre de archivo final | (vacío — el check verde comunica el estado) | — (o ícono de "abrir en Finder" 16pt, secundario, si el usuario hace hover — ver Interacciones) | `Color.primary.opacity(0.04)` |
+| `.completed(fileURL)` | `checkmark.circle.fill` | `.green` | Nombre de archivo final | (vacío — el check verde comunica el estado) | En hover: ícono de la app destino (12pt, si hay una configurada) + ícono "abrir en Finder" (12pt) — ver detalle abajo | `Color.primary.opacity(0.04)` |
 | `.failed(reason)` | `exclamationmark.triangle.fill` | `.red` | Título del video (si se alcanzó a obtener) o la URL cruda | Mensaje legible por `DownloadFailureReason` (tabla abajo) | — | `Color.red.opacity(0.08)` |
 
 **Mapeo de `DownloadFailureReason` a texto legible (nunca mostrar el enum crudo ni el stderr de yt-dlp sin traducir):**
@@ -213,6 +213,15 @@ El ancho **nunca** cambia — solo el alto. Esto evita que el panel "salte" hori
 | `.cancelled` | "Cancelado" |
 
 Esta distinción es la que el PRD pide explícitamente (riesgo: "sitio cambió" vs. "link inválido" son mensajes distintos, no un genérico "Error").
+
+**Trailing accessory de `.completed` — dos botones, no uno:**
+- **Ícono de la app destino** (bitmap real vía `NSWorkspace.icon(forFile:)`, no SF Symbol) — solo aparece si hay una app configurada en Settings. Reabre el archivo en esa app (mismo `FileOpenerService.openIfConfigured` que corre automáticamente al completar la descarga). Cubre el caso de que el usuario haya cerrado esa app o quiera reabrir el archivo después.
+- **Ícono "abrir en Finder"** (`folder`, SF Symbol) — sin cambios, revela el archivo en Finder.
+- Ambos a **12pt**, mismo tamaño exacto — el ícono de la app no se escala más grande solo por ser una imagen a color; visualmente pesa lo mismo que el glyph monocromo de al lado.
+- Mismo tap target de **32×32pt** (`Theme.Spacing.minimumTapTarget`) cada uno, separados por **2pt** — suficiente para no verse pegados, sin gastar ancho de fila en espaciado que no aporta.
+- Orden: **app destino primero (más cerca del texto), Finder después (más al borde)** — abrir en la app es la continuación natural del flujo del PRD (link → descarga → app de edición); Finder es el respaldo, no el camino principal.
+- Ambos visibles **solo en hover**, igual que el comportamiento actual del ícono de Finder — no son chrome permanente en una fila que ya comunicó su estado con el check verde.
+- Si no hay app configurada, el trailing accessory se comporta exactamente como antes: solo el ícono de Finder en hover.
 
 **Estado "sitio no reconocido, se intentará de todas formas" (no es un `DownloadState`):**
 - Vive como chip inline **debajo del input**, no como fila — aparece en cuanto `URLValidator` confirma que el texto es una URL válida pero `SupportedSite.detect` devuelve `.other`.
@@ -357,6 +366,7 @@ Fuerza Reduce Transparency ON (ya cubierto arriba) y además: el borde del panel
 | 2026-07-27 | % y ring de la fila .downloading en blanco en vez de accentColor/secondary | Iteración de diseño del usuario — mejor contraste sobre el glass |
 | 2026-07-27 | Fila .queued sin subtítulo visible | Iteración de diseño del usuario — menos ruido visual, solo título centrado; la accesibilidad sigue anunciando "En cola" |
 | 2026-07-27 | Fila .completed sin subtítulo — el check verde comunica el estado | Iteración de diseño del usuario — el check verde ya es suficiente para indicar completado, el subtítulo es ruido visual redundante; la accesibilidad sigue anunciando "Completado" |
+| 2026-07-27 | Fila .completed: se agrega ícono de la app destino (12pt) junto al ícono de Finder en hover | Pedido directo del usuario — permite reabrir el archivo en la app configurada sin depender solo del auto-open al completar; app destino va primero (más cerca del texto), Finder queda como respaldo |
 
 ---
 
