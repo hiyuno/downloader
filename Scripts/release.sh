@@ -28,6 +28,15 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT_DIR}"
 
+# xcodebuild requiere la instancia completa de Xcode (no Command Line Tools)
+# para archivar/exportar apps firmadas. `make test` ya fuerza esto vía
+# DEVELOPER_DIR; lo exportamos aquí también para que los xcodebuild directos
+# de este script (archive, exportArchive) usen la misma toolchain sin
+# depender de `xcode-select -s` global de la máquina.
+if [ -d "/Applications/Xcode.app/Contents/Developer" ]; then
+  export DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
+fi
+
 APP_NAME="Downloader"
 SCHEME="Downloader"
 PROJECT="${APP_NAME}.xcodeproj"
