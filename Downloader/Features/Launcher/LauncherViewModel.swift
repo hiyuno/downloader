@@ -1,17 +1,31 @@
 import AppKit
 import Observation
 import OSLog
+import SwiftUI
 
 @MainActor
 @Observable
 final class LauncherViewModel {
+    /// Estados del frame único (DESIGN_LIQUID §2). `.input` es el default cuando no
+    /// hay una descarga viva; los otros tres reflejan `currentDownload.state`.
+    enum FrameState: Equatable, Hashable {
+        case input
+        case downloading
+        case completed
+        case error
+    }
+
     var inputText = "" {
         didSet { guard inputText != oldValue else { return }; refreshDetection() }
     }
     private(set) var detectedURL: URL?
     private(set) var detectedSite: SupportedSite?
-    private(set) var activeDownloads: [DownloadTask] = []
+    /// Una sola descarga a la vez — vive en el actor incluso si el panel se cierra.
+    private(set) var currentDownload: DownloadTask?
     private(set) var focusToken = 0
+    /// Se incrementa en cada rechazo de input durante `.downloading` — la view lo
+    /// observa para disparar el shake (o el pulso de opacity bajo Reduce Motion).
+    private(set) var rejectionTick = 0
     var isVisible = false
 
     /// El panel AppKit se entera del alto y del estado agregado por closures —
@@ -28,10 +42,11 @@ final class LauncherViewModel {
     var binariesMissing: Bool { !BundledBinaries.isReady }
 
     var showsUnrecognizedSiteChip: Bool {
-        detectedURL != nil && detectedSite == .other
+        frameState == .input && detectedURL != nil && detectedSite == .other
     }
 
     var chip: (kind: InlineChip.Kind, symbol: String, text: String)? {
+        guard frameState == .input else { return nil }
         if binariesMissing {
             return (.error, "exclamationmark.triangle", "Falta yt-dlp — colócalo en Resources/bin (ver README)")
         }
@@ -41,45 +56,76 @@ final class LauncherViewModel {
         return nil
     }
 
-    /// Fórmula exacta de la tabla de dimensiones de DESIGN_LIQUID §1.
-    var panelHeight: CGFloat {
-        var height = Theme.Spacing.panelPadding * 2 + Theme.Spacing.inputRowHeight
-        if chip != nil {
-            height += Theme.Spacing.inputToChip + Theme.Spacing.chipHeight
+    var frameState: FrameState {
+        guard let currentDownload else { return .input }
+        switch currentDownload.state {
+        case .queued, .downloading: return .downloading
+        case .completed: return .completed
+        case .failed: return .error
         }
-        if !activeDownloads.isEmpty {
-            let rows = CGFloat(activeDownloads.count)
-            height += Theme.Spacing.inputToList
-            height += rows * Theme.Spacing.rowHeight + (rows - 1) * Theme.Spacing.betweenRows
-        }
-        return min(height, Theme.Size.panelMaxHeight)
     }
 
-    var listExceedsPanel: Bool {
-        guard !activeDownloads.isEmpty else { return false }
-        var height = Theme.Spacing.panelPadding * 2 + Theme.Spacing.inputRowHeight
-        if chip != nil { height += Theme.Spacing.inputToChip + Theme.Spacing.chipHeight }
-        let rows = CGFloat(activeDownloads.count)
-        height += Theme.Spacing.inputToList
-        height += rows * Theme.Spacing.rowHeight + (rows - 1) * Theme.Spacing.betweenRows
-        return height > Theme.Size.panelMaxHeight
+    /// Título mostrado en `.downloading` — "Preparando…" hasta que yt-dlp reporte el
+    /// título real (DESIGN_LIQUID §2, tabla de `.downloading`).
+    var downloadingTitle: String {
+        currentDownload?.title.flatMap { $0.isEmpty ? nil : $0 } ?? "Preparando…"
+    }
+
+    var downloadingTitleIsPlaceholder: Bool {
+        (currentDownload?.title ?? "").isEmpty
+    }
+
+    var downloadingPercent: Double {
+        currentDownload?.state.percent ?? 0
+    }
+
+    var completedTitle: String {
+        currentDownload?.displayTitle ?? ""
+    }
+
+    var completedFileURL: URL? {
+        if case .completed(let fileURL) = currentDownload?.state { return fileURL }
+        return nil
+    }
+
+    var errorMessage: String {
+        guard case .failed(let reason) = currentDownload?.state else { return "" }
+        if let title = currentDownload?.title, !title.isEmpty {
+            return "\(title) — \(reason.message)"
+        }
+        return reason.message
+    }
+
+    /// Fórmula exacta de DESIGN_LIQUID §1 — solo dos valores posibles en toda la app.
+    var panelHeight: CGFloat {
+        chip != nil ? Theme.Size.panelHeightWithChip : Theme.Size.panelHeightBase
     }
 
     // MARK: - Ciclo del panel
 
     func panelWillShow() {
-        if let clipboardURL = ClipboardService.detectURLOnPasteboard() {
-            inputText = clipboardURL.absoluteString
+        // `.completed`/`.error` no sobreviven a un cierre del panel — solo una
+        // descarga en curso (`.queued`/`.downloading`) sigue viéndose al reabrir.
+        if let currentDownload, !currentDownload.state.isActive {
+            self.currentDownload = nil
         }
-        refreshDetection()
-        focusToken += 1
+
+        if frameState == .input {
+            if let clipboardURL = ClipboardService.detectURLOnPasteboard() {
+                inputText = clipboardURL.absoluteString
+            }
+            refreshDetection()
+            focusToken += 1
+        }
         publishHeight()
         publishAggregateState()
     }
 
     func panelDidHide() {
         // La descarga sigue viva en el actor; solo se limpia la UI de entrada.
-        inputText = ""
+        if frameState == .input {
+            inputText = ""
+        }
     }
 
     func requestClose() {
@@ -89,6 +135,7 @@ final class LauncherViewModel {
     // MARK: - Submit
 
     func submit() {
+        guard frameState == .input else { return }
         guard let url = detectedURL else { return }
         guard !binariesMissing else {
             publishHeight()
@@ -101,7 +148,7 @@ final class LauncherViewModel {
             site: detectedSite ?? .other,
             destinationFolder: folder
         )
-        activeDownloads.insert(task, at: 0)
+        currentDownload = task
         inputText = ""
         publishHeight()
         publishAggregateState()
@@ -134,15 +181,18 @@ final class LauncherViewModel {
             )
 
             update(id: id) { $0.state = .completed(fileURL: fileURL) }
+            publishHeight()
             publishAggregateState()
             await NotificationService.shared.notifyCompleted(fileURL: fileURL)
             await FileOpenerService.openIfConfigured(fileURL)
         } catch let error as YTDLPError {
             Logger.launcher.error("Descarga falló: \(error.localizedDescription, privacy: .public)")
             update(id: id) { $0.state = .failed(reason: error.failureReason) }
+            publishHeight()
             publishAggregateState()
         } catch {
             update(id: id) { $0.state = .failed(reason: .siteBlockedOrChanged) }
+            publishHeight()
             publishAggregateState()
         }
     }
@@ -150,7 +200,85 @@ final class LauncherViewModel {
     func cancel(taskID: UUID) {
         Task { await YTDLPService.shared.cancel(taskID: taskID) }
         update(id: taskID) { $0.state = .failed(reason: .cancelled) }
+        publishHeight()
         publishAggregateState()
+    }
+
+    // MARK: - Input durante `.downloading`/`.completed`/`.error` (una sola descarga a la vez)
+
+    /// Se llama desde el monitor de `keyDown` a nivel de ventana (`LauncherPanelController`)
+    /// mientras el campo de texto real no existe (frame fuera de `.input`).
+    /// Retorna `true` si el evento fue consumido.
+    @discardableResult
+    func handleFrameKeyDown(_ event: NSEvent) -> Bool {
+        switch frameState {
+        case .input:
+            return false
+        case .downloading:
+            guard event.keyCode != Keycode.escape else { return false }
+            rejectInputDuringDownload()
+            return true
+        case .completed, .error:
+            guard event.keyCode != Keycode.escape else { return false }
+            if isPasteCommand(event) {
+                resumeInputFromPasteboard()
+                return true
+            }
+            if let characters = printableCharacters(from: event) {
+                resumeInput(with: characters)
+                return true
+            }
+            return false
+        }
+    }
+
+    private func rejectInputDuringDownload() {
+        rejectionTick += 1
+        AccessibilityNotification.Announcement("Espera a que termine la descarga actual").post()
+    }
+
+    private func resumeInputFromPasteboard() {
+        let pasted = NSPasteboard.general.string(forType: .string) ?? ""
+        resumeInput(with: pasted)
+    }
+
+    private func resumeInput(with text: String) {
+        currentDownload = nil
+        inputText = text
+        refreshDetection()
+        focusToken += 1
+        publishHeight()
+        publishAggregateState()
+    }
+
+    private func isPasteCommand(_ event: NSEvent) -> Bool {
+        event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers?.lowercased() == "v"
+    }
+
+    private func printableCharacters(from event: NSEvent) -> String? {
+        guard event.type == .keyDown, !event.modifierFlags.contains(.command) else { return nil }
+        guard let characters = event.characters, let scalar = characters.unicodeScalars.first else { return nil }
+        let value = scalar.value
+        // Excluye control chars (<0x20, incluye Return/Tab/Escape), Delete (0x7F) y el
+        // rango privado de teclas de función que usa AppKit para flechas/F-keys.
+        guard value >= 0x20, value != 0x7F, !(0xF700...0xF8FF).contains(value) else { return nil }
+        return characters
+    }
+
+    /// Texto anunciado por VoiceOver en cada transición de estado del frame — se posta
+    /// una sola vez por transición, nunca en cada tick de `%` (DESIGN_LIQUID §VoiceOver).
+    func announcement(from old: FrameState, to new: FrameState) -> String? {
+        guard old != new else { return nil }
+        switch new {
+        case .downloading:
+            return "Descargando"
+        case .completed:
+            return "Descarga completada: \(completedTitle)"
+        case .error:
+            return "Error: \(errorMessage)"
+        case .input:
+            return nil
+        }
     }
 
     // MARK: - Privado
@@ -174,8 +302,9 @@ final class LauncherViewModel {
     }
 
     private func update(id: UUID, _ mutate: (inout DownloadTask) -> Void) {
-        guard let index = activeDownloads.firstIndex(where: { $0.id == id }) else { return }
-        mutate(&activeDownloads[index])
+        guard var task = currentDownload, task.id == id else { return }
+        mutate(&task)
+        currentDownload = task
     }
 
     private func publishHeight() {
@@ -185,7 +314,9 @@ final class LauncherViewModel {
         onHeightChange?(height)
     }
 
-    /// Prioridad error > descargando > idle (DESIGN_LIQUID §4).
+    /// Prioridad error > descargando > idle (DESIGN_LIQUID §4). Con una sola descarga
+    /// posible, `aggregateState` ya no promedia `%` entre varias — refleja directamente
+    /// `currentDownload.state`.
     private func publishAggregateState() {
         let state = aggregateState
         guard state != lastReportedState else { return }
@@ -194,29 +325,20 @@ final class LauncherViewModel {
     }
 
     private var aggregateState: MenuBarIconRenderer.State {
-        let downloading = activeDownloads.compactMap(\.state.percent)
-        if activeDownloads.contains(where: {
-            if case .failed(let reason) = $0.state { return reason != .cancelled }
-            return false
-        }) {
-            return .error
-        }
-        if !downloading.isEmpty {
-            return .downloading(percent: downloading.reduce(0, +) / Double(downloading.count))
-        }
-        if activeDownloads.contains(where: { $0.state == .queued }) {
+        guard let currentDownload else { return .idle }
+        switch currentDownload.state {
+        case .failed(let reason):
+            return reason == .cancelled ? .idle : .error
+        case .downloading(let percent, _, _):
+            return .downloading(percent: percent)
+        case .queued:
             return .downloading(percent: 0)
+        case .completed:
+            return .idle
         }
-        return .idle
     }
+}
 
-    /// El estado de error del menu bar no queda pegado: se limpia al reabrir el launcher.
-    func clearFinishedFailures() {
-        activeDownloads.removeAll {
-            if case .failed = $0.state { return true }
-            return false
-        }
-        publishHeight()
-        publishAggregateState()
-    }
+private enum Keycode {
+    static let escape: UInt16 = 53
 }

@@ -7,7 +7,26 @@ y este proyecto usa [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-(sin cambios todavía)
+### Changed
+
+- **Rediseño del launcher: ahora es un solo panel, no una lista.** Downloader
+  deja atrás la lista de descargas con historial y pasa a un panel compacto
+  de una sola pieza que muestra siempre la descarga activa — sin scroll, sin
+  filas acumulándose.
+- **Una descarga a la vez.** Si pegas una URL nueva mientras hay una descarga
+  en curso, el panel la rechaza con una pequeña animación de rebote en vez de
+  encolarla o reemplazarla en silencio — así siempre sabes qué se está
+  descargando.
+- **Acciones siempre visibles.** Los botones para abrir el archivo en Finder
+  y para abrir la app de destino ya no dependen de pasar el mouse por
+  encima ni de expandir una fila: están presentes desde que la descarga
+  arranca.
+- **Título con estado claro mientras carga.** Mientras yt-dlp resuelve la
+  información del video, el panel muestra "Preparando…" en vez de dejar el
+  título en blanco.
+- **Transiciones pensadas para accesibilidad.** Los cambios de estado
+  (esperando URL → descargando → completado/error) usan animaciones breves
+  y con propósito, respetando "Reducir movimiento" del sistema.
 
 ## [1.0.0] - 2026-07-27
 

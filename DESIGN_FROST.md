@@ -1,7 +1,7 @@
 # DESIGN_FROST — Downloader
 
 > Estilo para macOS 14–15 (Sonoma / Sequoia) — materiales SwiftUI / `NSVisualEffectView`.
-> Última actualización: 2026-07-26.
+> Última actualización: 2026-07-27.
 > Tipografía, color semántico, espaciado, radios y **todas las animaciones**: ver `DESIGN_LIQUID.md` — idénticos en ambas versiones. Esta app no tiene motion "solo de Liquid Glass"; el único motion adicional en 26+ sería el materializado especular del glass, que Frost no intenta imitar (ver Materiales abajo).
 
 ---
@@ -33,9 +33,9 @@ extension View {
 - **Stroke de definición:** Liquid Glass tiene highlights especulares dinámicos que definen el borde del panel contra el fondo; `.ultraThinMaterial` solo no los tiene, así que un `strokeBorder` de 1pt blanco al 15% de opacidad reemplaza esa función — sin este borde, el panel se puede leer como un rectángulo borroso sin límite claro sobre fondos oscuros o con mucho contraste detrás.
 - **Sin variante "clear"** — no existe tal cosa en `.ultraThinMaterial`; no aplica la distinción Regular/Clear de Liquid Glass.
 
-## Materiales — Filas y contenido interno
+## Materiales — El frame (input / downloading / completed / error)
 
-Sin cambios respecto a Liquid Glass: las filas (`DownloadRowView`) y el input **nunca** llevaron material propio en ninguna versión — son fills planos (`Color.primary.opacity(0.04)`, `Color.red.opacity(0.08)` para failed) sobre el único glass del panel. Esto es idéntico en Frost.
+Sin cambios respecto a Liquid Glass, y sin cambios por el rediseño de 2026-07-27 que retiró `DownloadRowView` como lista: el frame único **nunca** lleva material propio en ninguna versión — es un fill plano (`Color.primary.opacity(0.04)`, `Color.red.opacity(0.08)` solo en `.error`) sobre el único glass/material del panel, en sus 4 estados. La máquina de estados del frame (ver `DESIGN_LIQUID.md` → "Pantallas y componentes" → "El frame") es puramente de SwiftUI/layout — no depende de qué material esté pintando el panel por debajo, así que no hay nada específico que documentar aquí más allá de confirmar que ninguno de los 4 estados introduce un material nuevo.
 
 ## Materiales — Ventana de Settings
 
@@ -76,3 +76,4 @@ El ícono del `NSStatusItem` (idle / descargando / error, sección "Menu bar" de
 | 2026-07-26 | `.ultraThinMaterial` de SwiftUI en vez de `NSVisualEffectView` puenteado a mano | SwiftUI ya expone el material correcto sin código AppKit adicional; el `NSPanel` solo necesita `backgroundColor = .clear` y dejar que la vista SwiftUI pinte encima |
 | 2026-07-26 | Se agrega `strokeBorder` blanco 15% + sombra 24pt/25% que no existen en la versión Liquid Glass | Compensan la ausencia de especularidad dinámica del glass real — sin esto el panel se ve "plano" y sin límite definido en Frost |
 | 2026-07-26 | Botones "Cambiar…"/"Quitar" de Settings (`DownloaderButtonStyle`) usan `.thinMaterial` en Frost, no fill plano `Color.primary.opacity(...)` como estaba antes del review de Larry | No era intencional — era una inconsistencia entre ramas: en macOS 26+ el mismo botón ya es `.glassEffect(.regular)` (translúcido), pero el fallback pre-26 era un fill sólido opaco, dando dos tratamientos visuales distintos para el mismo componente según versión de OS. La regla general de Jonny (tabla de compatibilidad: "Botón secundario" → `.glass` en 26+, `.background(.thinMaterial, in: Capsule())` antes) ya definía el fallback correcto; `DownloaderButtonStyle` simplemente no la seguía. Esto **no** choca con la regla de "nunca material sobre material" del panel launcher — el botón vive en la ventana de Settings, sobre un `Form` con fondo de ventana opaco de sistema, no sobre el glass del panel, así que no hay stacking de materiales. Feedback de press se simplificó a `.opacity(configuration.isPressed ? 0.7 : 1)` en ambas ramas, igualando el tratamiento que ya usaba la rama Liquid Glass, en vez de variar la opacidad del fill. |
+| 2026-07-27 | Rediseño del frame único (retiro de `DownloadRowView` como lista, ver `DESIGN_LIQUID.md`) no requiere ningún cambio en este documento | El rediseño es de layout/estado de SwiftUI (qué contenido muestra el frame en cada uno de sus 4 estados), no de materiales — el frame sigue siendo un fill plano sobre el único material del panel en ambas versiones de macOS, exactamente como ya era el input row y las filas antes del rediseño |

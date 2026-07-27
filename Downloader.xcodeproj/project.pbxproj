@@ -29,7 +29,6 @@
 		7AFCDCD7E87C4966DB02F4EF /* SupportedSite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4638FC202A07BCD05488F944 /* SupportedSite.swift */; };
 		7B530B0139C02EA3E1E6B266 /* YTDLPService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB72C45C044EA91D29432A3E /* YTDLPService.swift */; };
 		7ED874DDD8F92177153992AC /* URLValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84A5B75E5E4EA54757E3E0F3 /* URLValidatorTests.swift */; };
-		81D92865E4666A96B2E1FDF6 /* DownloadRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BEC8804C8971C923C2842B8 /* DownloadRowView.swift */; };
 		88F326E0C53ABAE28C8EED9D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5E84C2699F23DD13CF33BA73 /* Assets.xcassets */; };
 		8A9E04C934F3D2F0B7018D8D /* YTDLPUpdateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C5E0F56FD1F450945A7142F /* YTDLPUpdateService.swift */; };
 		8CB1086AEBCD12C794371687 /* LauncherPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FE5E616387CD1D38810F872 /* LauncherPanel.swift */; };
@@ -82,7 +81,6 @@
 		5FF81BD5102C5EF503E5D449 /* GlassBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassBackground.swift; sourceTree = "<group>"; };
 		6226884B355C04D0823274C8 /* MenuBarIconRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarIconRenderer.swift; sourceTree = "<group>"; };
 		7A57B68BBA4A2885AFF6FC96 /* DownloaderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloaderApp.swift; sourceTree = "<group>"; };
-		7BEC8804C8971C923C2842B8 /* DownloadRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadRowView.swift; sourceTree = "<group>"; };
 		7C3C28FF04B07FCC20B9C60E /* LauncherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LauncherView.swift; sourceTree = "<group>"; };
 		8177F0A9FD9F1F800775B4E0 /* DownloadTask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadTask.swift; sourceTree = "<group>"; };
 		83394EC9104694DDC732741C /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -141,7 +139,6 @@
 		15CB86650D6E3256CC2DA809 /* Launcher */ = {
 			isa = PBXGroup;
 			children = (
-				7BEC8804C8971C923C2842B8 /* DownloadRowView.swift */,
 				4FE5E616387CD1D38810F872 /* LauncherPanel.swift */,
 				D5469894D546D03CD933A068 /* LauncherPanelController.swift */,
 				7C3C28FF04B07FCC20B9C60E /* LauncherView.swift */,
@@ -409,7 +406,6 @@
 				38718D692EBB351903F81018 /* BundledBinaries.swift in Sources */,
 				5E1488E39201B3322951DCBC /* ClipboardService.swift in Sources */,
 				24F4CD0393B2AB3012B54597 /* DownloadProgress.swift in Sources */,
-				81D92865E4666A96B2E1FDF6 /* DownloadRowView.swift in Sources */,
 				6741A26BF09D7B44E5C8AC76 /* DownloadState.swift in Sources */,
 				D9C38006B928C9E17F0CCDFD /* DownloadTask.swift in Sources */,
 				06A170CDAE170B7B4C96A120 /* DownloaderApp.swift in Sources */,

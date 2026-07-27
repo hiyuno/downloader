@@ -1,7 +1,7 @@
 # DESIGN_LIQUID — Downloader
 
 > Estilo para macOS 26+ (Tahoe, Liquid Glass).
-> Fuente de verdad de diseño. Última actualización: 2026-07-26.
+> Fuente de verdad de diseño. Última actualización: 2026-07-27.
 > Todo lo que no está aquí no está decidido.
 
 ---
@@ -162,23 +162,20 @@ struct GlassPanelBackground: ViewModifier {
 
 ### 1. Ventana launcher — dimensiones y estados
 
-**Ancho fijo:** 560pt. **Alto:** variable, calculado por contenido:
+**REDISEÑO 2026-07-27 — un solo frame, sin lista.** La lista de filas debajo del input desaparece por completo. Todo lo que la app comunica sobre la descarga en curso ocurre **dentro de la misma superficie del input** — un único frame que atraviesa una máquina de estados (`.input` → `.downloading` → `.completed` / `.error` → de vuelta a `.input`). No hay una segunda superficie que aparezca debajo. Ver sección 2 para la especificación completa de los 4 estados.
 
-| Estado | Alto |
+**Ancho fijo:** 560pt, sin cambios. **Alto:** ahora prácticamente fijo — el frame mide **siempre 52pt** en sus 4 estados (nunca cambia de tamaño al cambiar de estado, solo su contenido). La única fuente de variación de alto que sobrevive es el chip de advertencia "sitio no reconocido", que sigue viviendo debajo del frame y solo aplica en `.input`:
+
+| Estado del panel | Alto |
 |---|---|
-| Vacío (solo input, sin clipboard detectado) | 76pt (12 padding + 52 input + 12 padding) |
-| Link pegado / detectado, sitio reconocido | 76pt (badge de sitio vive inline en el input, no agrega alto) |
-| Link pegado, sitio no reconocido | 76pt + 22pt (chip de advertencia) = 98pt |
-| 1 descarga activa | 12 (padding) + 52 (input) + 8 (spacing) + 48 (fila) + 12 (padding) = 132pt |
-| N descargas activas | 76 + 8 + N×(48+4) − 4, hasta un máximo de **420pt** |
-| Más filas de las que caben en 420pt | la lista de filas se vuelve un `ScrollView` interno; el panel deja de crecer |
+| Frame en `.input`, `.downloading`, `.completed` o `.error` (sin chip) | 76pt (12 padding + 52 frame + 12 padding) |
+| Frame en `.input` con chip de advertencia visible | 76pt + 22pt = 98pt (el chip solo puede aparecer en `.input` — no hay detección de sitio corriendo en los otros 3 estados) |
 
-El ancho **nunca** cambia — solo el alto. Esto evita que el panel "salte" horizontalmente y rompa la posición centrada calculada al abrir (TRD sección 2: centrado en la pantalla del cursor).
+El ancho **nunca** cambia. El alto ahora tiene solo dos valores posibles en toda la app (76pt / 98pt) en vez de una escala continua hasta 420pt — la lista, el `ScrollView` interno y el techo `panelMaxHeight` quedan retirados junto con `DownloadRowView` como componente de lista (ver Decisiones registradas).
 
 **Layout vertical (de arriba hacia abajo):**
-1. Input row (52pt) — nombre del sitio (12pt Medium, si sitio reconocido) a la izquierda, campo de texto ocupando el resto, sin botón de submit visible (Enter es la acción, no hay affordance visual redundante — coherente con "cero fricción, cero decisiones" del PRD). Nota: a partir de 2026-07-27, el ícono de sitio fue removido; queda solo el nombre.
-2. Chip de advertencia (solo si sitio no reconocido) — 22pt, aparece/desaparece con el input, no empuja layout con salto brusco (ver Animaciones)
-3. Lista de `DownloadRowView`, una por descarga activa, orden: más reciente arriba
+1. El frame (52pt) — su contenido interno cambia por completo según el estado (ver sección 2), pero su altura, radio (`r=12`, nested de `r_outer=24 − padding=12`) y fill base nunca cambian entre estados.
+2. Chip de advertencia (solo si sitio no reconocido, solo en `.input`) — 22pt, aparece/desaparece con el input, no empuja layout con salto brusco (ver Animaciones).
 
 **Estado "recién abierto" (foco inmediato):**
 - Al invocar `panel.makeKeyAndOrderFront(nil)`, el `NSTextField` del input (bridge AppKit, no `TextField` de SwiftUI puro — se necesita control fino de `becomeFirstResponder` sincronizado con la aparición del panel) recibe `becomeFirstResponder()` en el mismo frame.
@@ -186,25 +183,71 @@ El ancho **nunca** cambia — solo el alto. Esto evita que el panel "salte" hori
 - Si no hay URL en clipboard: campo vacío, cursor parpadeando al inicio, placeholder "Pega un link de YouTube, TikTok, Instagram…" en `.tertiary`.
 - El caret debe estar visible y parpadeando en el primer frame renderizado — no hay una animación de "focus ring creciendo" ni de placeholder que se desvanece al enfocar. Cualquier chrome de foco adicional compite con la animación de aparición del panel (ver Animaciones) y viola la regla de "no animar lo que pasa cientos de veces al día".
 
+**Qué estado muestra el frame al reabrir el panel (decisión, ver Decisiones registradas):**
+- **Si no hay una descarga en curso** (frame estaba en `.completed`, `.error`, o `.input` cuando se cerró el panel): el frame **siempre vuelve a `.input`** — clipboard-detection y foco se ejecutan como en cualquier apertura. `.completed` y `.error` no sobreviven a un cierre de panel; son estados transitorios pensados para verse una vez, inmediatamente después del evento que los generó.
+- **Si hay una descarga en curso** (el usuario cerró el panel mientras el frame estaba en `.downloading` — la descarga sigue viva en el actor, `panelDidHide()` no la cancela): el frame **vuelve a `.downloading`** con el progreso actual, no a `.input`. El usuario no debe reabrir el launcher y encontrar el campo de texto vacío como si nada estuviera pasando, mientras una descarga real sigue corriendo en background.
+
 ---
 
-### 2. Fila de descarga — `DownloadRowView`, 4+1 estados de un mismo componente
+### 2. El frame — máquina de estados única (`.input` → `.downloading` → `.completed` / `.error` → `.input`)
 
-**No son pantallas separadas.** Es un único componente con un `switch` interno sobre `DownloadState`, más una advertencia inline que vive en el input (no en la fila) para el caso "sitio no reconocido".
+**`DownloadRowView` y el concepto de lista de filas quedan retirados.** Ya no existen filas independientes por descarga ni una lista de "descargas activas" visible — solo hay **una descarga a la vez**, y su estado se muestra transformando la superficie del input mismo. Ver Decisiones registradas para el porqué y qué reemplaza a `DownloadRowView`.
 
-**Layout base (48pt alto, común a todos los estados):**
-`[ícono 20×20pt] [8pt] [título 13pt + subtítulo 11pt, VStack] [trailing accessory, alineado a la derecha]`
+**Layout base — el frame nunca cambia de tamaño ni de radio entre estados, solo su contenido:**
+`52pt alto · padding horizontal 16pt · r=12pt (nested de r_outer=24, padding=12) · fill Color.primary.opacity(0.04) (Color.red.opacity(0.08) solo en `.error`)`
 
-| Estado | Ícono | Color ícono | Título | Subtítulo | Trailing accessory | Fondo de fila |
-|---|---|---|---|---|---|---|
-| `.queued` | `clock` | `.secondary` | Nombre de archivo estimado o "Preparando…" | (vacío — sin subtítulo en este estado) | — | `Color.primary.opacity(0.04)` |
-| `.downloading(percent, speed, eta)` | `arrow.down.circle` | `Color.accentColor` | Título del video | (vacío — sin subtítulo en este estado) | "99%" (11pt `.white` monospacedDigit) + Ring de progreso circular (18pt, blanco), alineados horizontalmente, spacing 4pt entre texto y ring | `Color.primary.opacity(0.04)` |
-| `.completed(fileURL)` | `checkmark.circle.fill` | `.green` | Nombre de archivo final | (vacío — el check verde comunica el estado) | En hover: ícono de la app destino (12pt, si hay una configurada) + ícono "abrir en Finder" (12pt) — ver detalle abajo | `Color.primary.opacity(0.04)` |
-| `.failed(reason)` | `exclamationmark.triangle.fill` | `.red` | Título del video (si se alcanzó a obtener) o la URL cruda | Mensaje legible por `DownloadFailureReason` (tabla abajo) | — | `Color.red.opacity(0.08)` |
+El frame ocupa exactamente el espacio que el input row siempre ocupó — la transición entre estados es un crossfade de contenido dentro de una caja que no se mueve ni redimensiona (misma filosofía que ya aplicaba a `DownloadRowView`: "el layout no cambia de tamaño entre estados, por eso la transición es crossfade puro sin desplazamiento").
 
-**Mapeo de `DownloadFailureReason` a texto legible (nunca mostrar el enum crudo ni el stderr de yt-dlp sin traducir):**
+#### Estado `.input` (base)
 
-| Caso | Subtítulo mostrado |
+Sin cambios respecto al input row actual: badge de sitio (12pt Medium, `.secondary`, sin ícono) a la izquierda si `SupportedSite` reconocido, `URLInputField` ocupando el resto, sin botón de submit visible — Enter es la acción. Cursor de texto real, editable.
+
+#### Estado `.downloading`
+
+`[ícono 20×20pt, arrow.down.circle, Color.accentColor] [8pt] [título 13pt Regular, .primary, 1 línea, truncationMode .middle, centrado verticalmente] [Spacer] [trailing: "NN%" 11pt .white monospacedDigit + ProgressRing 18pt, spacing 4pt]`
+
+| Elemento | Valor |
+|---|---|
+| Título | `task.title` si ya llegó del parser de yt-dlp; si no, **"Preparando…"** en `.secondary` (mismo peso 13pt, distinto color mientras no hay título real — señal sutil de "esto todavía no es el título final") |
+| Ícono | Aparece por primera vez respecto a `.input` (que no tiene ícono desde la decisión de 2026-07-27) — es la señal visual primaria de "ya no estás escribiendo, esto es de solo lectura" |
+| % + ring | Idéntico al tratamiento que tenía `DownloadRowView.downloading`: ring `Circle().trim()`, track `Color.white.opacity(0.15)` 2pt, arco `Color.white` 2pt `lineCap: .round`, arranca a las 12 en punto, sentido horario; `%` con `monospacedDigit()` para evitar jitter |
+| Fill del frame | Igual que `.input` — `Color.primary.opacity(0.04)`, sin cambio, para que la transición sea puramente de contenido |
+
+**Una descarga a la vez — qué pasa si se intenta pegar/escribir/Enter mientras `.downloading`:**
+- El campo de texto real no existe en este estado (fue reemplazado por el label del título) — el panel captura `keyDown`/`paste` a nivel de ventana mientras el frame está en `.downloading` y los descarta sin insertar nada en ningún buffer.
+- **Feedback: shake sutil del frame**, no "nada visible". Se decide shake y no silencio porque el usuario que pega un segundo link inmediatamente después del primero espera *algún* acuse de recibo — un launcher que no reacciona en absoluto a Cmd+V se lee como colgado, no como "ocupado". El shake es la señal system-native para "acción rechazada" (mismo lenguaje que el shake de contraseña incorrecta de macOS), no una animación decorativa — no cae en la prohibición de bounce/overshoot de la sección Animaciones, que aplica a motion *de entrada/salida*, no a feedback de rechazo.
+  - Especificación del shake: traslación horizontal del frame completo, ±4pt, 3 ciclos, `.easeInOut`, **160ms total**. Sin cambio de escala, sin cambio de opacity.
+  - Reduce Motion: se sustituye por un pulso de opacity del frame (1 → 0.6 → 1, **150ms**, `.easeInOut`) — comunica "rechazado" sin traslación espacial.
+  - Accesibilidad: se posta `AccessibilityNotification.Announcement("Espera a que termine la descarga actual")` en el momento del rechazo — el shake es puramente visual y un usuario de VoiceOver no lo percibe de otra forma.
+
+#### Estado `.completed`
+
+`[ícono 20×20pt, checkmark.circle.fill, .green] [8pt] [título 13pt Regular, .primary, 1 línea, centrado verticalmente] [Spacer] [trailing: hasta 2 botones de acción]`
+
+- Título: nombre de archivo final (mismo que `DownloadRowView.completed` mostraba).
+- **Trailing accessory — dos botones, mismo diseño que tenía `DownloadRowView.completed`, con un cambio de visibilidad (ver más abajo):**
+  - Ícono de la app destino (bitmap real vía `NSWorkspace.icon(forFile:)`, 12pt) — solo si hay app configurada en Settings; reabre el archivo ahí.
+  - Ícono "abrir en Finder" (`folder`, SF Symbol, 12pt) — revela el archivo en Finder.
+  - Mismo tap target 32×32pt cada uno (`Theme.Spacing.minimumTapTarget`), separados 2pt, orden app-destino-primero / Finder-después — sin cambios respecto a la spec anterior de `DownloadRowView`.
+  - **Cambio: ambos botones ahora son visibles siempre, no solo en hover.** Antes tenía sentido ocultarlos en hover porque vivían en una fila dentro de una lista potencialmente larga — ahora el frame es la única superficie del panel y es exactamente donde el usuario ya está mirando cuando la descarga termina. Ocultar los botones detrás de hover en este único frame además es una regresión de accesibilidad real: un usuario de teclado o VoiceOver nunca dispara `onHover`, así que los botones quedaban efectivamente inalcanzables sin mouse. Siempre-visibles los hace navegables por Tab.
+  - Si no hay app configurada: solo el ícono de Finder, igual que antes.
+
+**Persistencia y cómo se sale de `.completed`:**
+- El frame se queda en `.completed` **indefinidamente mientras el panel sigue abierto** — no hay timeout ni desvanecimiento automático.
+- **Gesto de salida: cualquier tecla imprimible o ⌘V** transiciona el frame de vuelta a `.input` inmediatamente, insertando el carácter/pegado como si el usuario hubiera empezado a escribir en un input vacío normal — no hay paso intermedio ni una segunda pulsación necesaria.
+- **Se decide NO agregar un botón ✕.** Un botón de dismiss explícito contradice el principio ya registrado en este documento ("no hay botón CTA visible en el flujo principal — Enter es la acción") y agrega una decisión visual a una superficie que ya se limpia sola con el próximo gesto natural del usuario (escribir o pegar el siguiente link, que es exactamente lo que hacía antes de esta descarga). Pedir "haz clic en ✕" es más fricción que simplemente seguir usando el campo.
+- **Escape sigue cerrando el panel** (comportamiento global sin cambios) — no se sobrecarga Escape para "volver a `.input` sin cerrar", para no crear dos significados distintos de la misma tecla según el estado del frame.
+
+#### Estado `.error`
+
+`[ícono 20×20pt, exclamationmark.triangle.fill, .red] [8pt] [texto de razón 13pt Regular, .red, 1 línea, centrado verticalmente] [Spacer, sin trailing accessory]`
+
+- Fill del frame: `Color.red.opacity(0.08)` — único estado con tinte de color, señal de error, no decorativo (mismo tratamiento que tenía `.failed` en `DownloadRowView`).
+- Texto: el mensaje legible de la tabla de `DownloadFailureReason` de abajo — nunca el enum crudo ni stderr de yt-dlp sin traducir. Si el título del video llegó a obtenerse antes de fallar, antecede al mensaje: "Nombre del video — mensaje de error"; si no, solo el mensaje.
+
+**Mapeo de `DownloadFailureReason` a texto legible (sin cambios respecto a la spec anterior):**
+
+| Caso | Texto mostrado |
 |---|---|
 | `.unsupportedSite` | "Este sitio no es compatible" |
 | `.networkError` | "Sin conexión — reintenta" |
@@ -212,27 +255,13 @@ El ancho **nunca** cambia — solo el alto. Esto evita que el panel "salte" hori
 | `.invalidURL` | "El link no es válido" |
 | `.cancelled` | "Cancelado" |
 
-Esta distinción es la que el PRD pide explícitamente (riesgo: "sitio cambió" vs. "link inválido" son mensajes distintos, no un genérico "Error").
+**Cómo se vuelve al input desde `.error`: solo escribir/pegar, igual que `.completed` — sin botón "Reintentar".**
+- Se decide **no** agregar un botón de reintento explícito. Razón: de los 5 casos de `DownloadFailureReason`, solo dos (`.networkError`, `.siteBlockedOrChanged`) son plausiblemente transitorios; `.invalidURL` y `.unsupportedSite` no se arreglan reintentando el mismo link, y `.cancelled` fue una decisión deliberada del usuario. Un botón "Reintentar" que solo tiene sentido en 2 de 5 casos es una superficie de UI condicionalmente útil — más complejidad que "pega el link de nuevo con ⌘V", que ya es igual de rápido y funciona para los 2 casos donde reintentar sí ayuda. Consistente con el mismo principio anti-botón que `.completed`.
+- Mismo gesto exacto que `.completed`: cualquier tecla imprimible o ⌘V regresa a `.input`, insertando el carácter/pegado.
 
-**Trailing accessory de `.completed` — dos botones, no uno:**
-- **Ícono de la app destino** (bitmap real vía `NSWorkspace.icon(forFile:)`, no SF Symbol) — solo aparece si hay una app configurada en Settings. Reabre el archivo en esa app (mismo `FileOpenerService.openIfConfigured` que corre automáticamente al completar la descarga). Cubre el caso de que el usuario haya cerrado esa app o quiera reabrir el archivo después.
-- **Ícono "abrir en Finder"** (`folder`, SF Symbol) — sin cambios, revela el archivo en Finder.
-- Ambos a **12pt**, mismo tamaño exacto — el ícono de la app no se escala más grande solo por ser una imagen a color; visualmente pesa lo mismo que el glyph monocromo de al lado.
-- Mismo tap target de **32×32pt** (`Theme.Spacing.minimumTapTarget`) cada uno, separados por **2pt** — suficiente para no verse pegados, sin gastar ancho de fila en espaciado que no aporta.
-- Orden: **app destino primero (más cerca del texto), Finder después (más al borde)** — abrir en la app es la continuación natural del flujo del PRD (link → descarga → app de edición); Finder es el respaldo, no el camino principal.
-- Ambos visibles **solo en hover**, igual que el comportamiento actual del ícono de Finder — no son chrome permanente en una fila que ya comunicó su estado con el check verde.
-- Si no hay app configurada, el trailing accessory se comporta exactamente como antes: solo el ícono de Finder en hover.
-
-**Estado "sitio no reconocido, se intentará de todas formas" (no es un `DownloadState`):**
-- Vive como chip inline **debajo del input**, no como fila — aparece en cuanto `URLValidator` confirma que el texto es una URL válida pero `SupportedSite.detect` devuelve `.other`.
-- Ícono `questionmark.circle`, color `.orange`, texto 11pt: "Sitio no reconocido — se intentará de todas formas".
-- **No bloquea el submit.** Enter funciona igual; el chip es puramente informativo. Si el usuario da Enter, el chip desaparece y aparece la fila en `.queued` como con cualquier otro sitio.
-
-**Ring de progreso de la fila `.downloading` (`ProgressRing`, SwiftUI, 18pt):**
-- Mismo concepto visual que el ring del menu bar (`MenuBarIconRenderer`): track + arco, dibujado con un `Circle().trim()` en vez de `Core Graphics` porque aquí sí vive dentro del entorno de una vista SwiftUI normal.
-- Track: `Color.white.opacity(0.15)`, 2pt de grosor.
-- Arco: `Color.white`, mismo grosor, `lineCap: .round`, arranca a las 12 en punto (rotación de −90°) y avanza en sentido horario según `percent`.
-- Acompañado a su izquierda por un `Text` que muestra "\(Int(percent * 100))%", 11pt `.white`, con `monospacedDigit()` para evitar jitter al cambiar dígitos. El ring es puramente visual (`accessibilityHidden(true)`); el `%` ya se anuncia una sola vez, en el `accessibilityLabel` combinado de la fila.
+**Estado "sitio no reconocido, se intentará de todas formas" (no es un estado del frame):**
+- Sin cambios respecto a la spec anterior — sigue viviendo como chip inline **debajo del frame**, solo visible cuando el frame está en `.input`. Ver sección 1 para su efecto en el alto del panel.
+- Ícono `questionmark.circle`, color `.orange`, texto 11pt: "Sitio no reconocido — se intentará de todas formas". No bloquea el submit.
 
 ---
 
@@ -275,6 +304,8 @@ Todos los íconos son **template images** (monocromáticos, se re-tintan solos c
 - El menú del click (`NSMenu`) es siempre el mismo (Abrir Downloader / Ajustes… / separador / Salir), independiente del estado del ícono — el estado no cambia la estructura del menú, solo el glyph del botón.
 - Círculos del ring de progreso están exentos de la regla de Continuous Corners (no son rectángulos redondeados).
 
+**Sin cambios por el rediseño del frame único (2026-07-27).** El menu bar ring sigue reflejando `MenuBarIconRenderer.State`, derivado de `aggregateState` en `LauncherViewModel`, exactamente igual que antes — el ring no sabe ni le importa que ahora solo pueda existir una descarga a la vez en vez de N; sigue leyendo el mismo estado agregado (`idle` / `downloading(percent)` / `error`) que ya calculaba. Con una sola descarga posible, `aggregateState` deja de necesitar promediar `%` entre varias descargas activas, pero la superficie visible del menu bar — glyph, tamaño, throttle de redibujado, prioridad error > descargando > idle — no cambia en absoluto.
+
 ---
 
 ## Componentes del sistema
@@ -284,10 +315,9 @@ Todos los íconos son **template images** (monocromáticos, se re-tintan solos c
 - **Settings — botones de acción ("Cambiar…"):** `.buttonStyle(.glass)` en macOS 26+, pill, altura 28pt.
 - **Destructivo:** no aplica en v1 (no hay delete de historial ni de filas — no hay historial).
 
-### Listas y filas
-- La lista de descargas activas no es un `List` nativo de SwiftUI (que trae su propio material/separadores pensados para contenido largo) — es un `VStack` simple dentro del panel, porque son máximo un puñado de filas visibles a la vez y `List` introduce chrome (separadores, insets de sistema) que no aporta nada aquí.
-- Sin separadores entre filas — el espacio de 4pt entre filas ya crea la separación visual necesaria; una línea divisoria sería ruido adicional.
-- Sin swipe actions, sin contextMenu de borrado — no hay nada que borrar (sin historial).
+### Listas y filas — retirado
+
+**Ya no hay lista.** Esta sección documentaba `DownloadRowView` como componente de lista (`VStack` de filas, sin separadores, sin swipe actions). Desde el rediseño de 2026-07-27 (ver sección "Pantallas y componentes" → "El frame") no existe una lista de descargas activas — hay un único frame que muestra el estado de la única descarga en curso. No hay nada que listar, ordenar ni scrollear.
 
 ### Iconografía
 - SF Symbols exclusivamente.
@@ -304,19 +334,19 @@ Todos los íconos son **template images** (monocromáticos, se re-tintan solos c
 |---|---|---|---|---|
 | **Aparición del panel** | Hotkey / click en menu bar | Opacity 0→1 + scale 0.96→1.0, sin bounce | `.easeOut`, **120ms** | Acción disparada por teclado cientos de veces/día — se trata como Raycast/Spotlight: casi nada, solo lo suficiente para no sentirse como un "pop" abrupto. Nunca spring con overshoot: el overshoot se reserva para gestos con momentum real, y aquí no hay gesto, hay una tecla |
 | **Cierre del panel** | Escape / pérdida de foco (`windowDidResignKey`) | Solo opacity 1→0, sin scale | `.easeIn` es aceptable únicamente aquí porque es una salida sin necesidad de sentirse "responsiva" — el usuario ya decidió irse | **80ms** | Salida siempre más rápida que la entrada (asimetría deliberada: entrar puede tener un ápice de materialización, salir debe sentirse instantáneo — el usuario no espera nada de la app al cerrar) |
-| **Cambio de alto del panel** (aparece/desaparece el chip de advertencia, se agrega una fila) | Reactivo a estado | Animar el alto del contenedor, `.spring(response: 0.35, dampingFraction: 1.0)` — sin bounce | ~280ms de asentamiento | Es reposicionamiento de contenido, no un gesto — tabla de Apple: "Move/reposition → damping 1.0, response 0.4"; se usa 0.35 por ser una superficie pequeña |
-| **Transición entre estados de una fila** (`.queued` → `.downloading` → `.completed`/`.failed`) | Cambio de `DownloadState` | Crossfade de ícono + texto (opacity, sin mover posición), `.easeOut` | **200ms** | Ocasional (una vez por descarga, no repetitivo), amerita motion completo — pero sin desplazamiento porque el layout de la fila no cambia de tamaño entre estados |
-| **Nueva fila insertada en la lista** | Se dispara una nueva descarga con otra ya en curso | Height 0→48pt + opacity 0→1 juntos, `.spring(response: 0.35, dampingFraction: 1.0)` | ~280ms | Igual razonamiento que el cambio de alto del panel — es la misma familia de animación (el contenedor crece), no una animación aparte |
-| **Progreso de la barra dentro de `.downloading`** | Cada tick de `--progress-template` (~1/seg) | Animar el ancho del fill hacia el nuevo `percent`, `.linear` | **200ms** por tick | Es un valor de datos entrando, no un gesto — un tween lineal corto entre el valor viejo y el nuevo evita el salto brusco de un `%` a otro sin fingir un progreso continuo que no existe |
+| **Cambio de alto del panel** (aparece/desaparece el chip de advertencia — única causa restante desde el rediseño de frame único) | Reactivo a estado | Animar el alto del contenedor, `.spring(response: 0.35, dampingFraction: 1.0)` — sin bounce | ~280ms de asentamiento | Es reposicionamiento de contenido, no un gesto — tabla de Apple: "Move/reposition → damping 1.0, response 0.4"; se usa 0.35 por ser una superficie pequeña |
+| **Transición entre estados del frame** (`.input` → `.downloading` → `.completed`/`.error` → `.input`) | Cambio de estado del frame | Crossfade de ícono + texto + trailing accessory (opacity, sin mover posición), `.easeOut` | **200ms** | Ocasional por descarga, no repetitivo — amerita motion completo, pero sin desplazamiento porque el frame **nunca** cambia de tamaño entre sus 4 estados (regla nueva del rediseño: el frame mide 52pt siempre) |
+| **Shake de rechazo** (se pega/escribe/Enter mientras el frame está en `.downloading`) | Intento de input durante descarga activa | Traslación horizontal ±4pt, 3 ciclos, `.easeInOut` | **160ms** | Feedback de acción rechazada, no motion decorativo de entrada/salida — mismo lenguaje que el shake de contraseña incorrecta de macOS; no está sujeto a la prohibición de bounce/overshoot de esta tabla porque no es un gesto con momentum, es un acuse de recibo de "no" |
+| **Progreso del ring dentro de `.downloading`** | Cada tick de `--progress-template` (~1/seg) | Animar el arco del `ProgressRing` hacia el nuevo `percent`, `.linear` | **200ms** por tick | Es un valor de datos entrando, no un gesto — un tween lineal corto entre el valor viejo y el nuevo evita el salto brusco de un `%` a otro sin fingir un progreso continuo que no existe |
 | **Ring de progreso del menu bar** | Cada redraw permitido (throttle de la sección Menu bar) | Sin animación explícita — es un redraw directo del valor actual | — | Redibujar un `NSImage` estático no es interpolable de forma barata; el throttle (≥2pp o 400ms) ya evita que se vea como un salto — animarlo encima sería gastar CPU en un lugar que el usuario mira de reojo, no de frente |
 | **Cambio de ícono de menu bar entre estados** (idle↔downloading↔error) | Cambio de estado agregado de las descargas | Crossfade corto del `NSImage` vía `CALayer` transition | **150ms** | Evita el parpadeo de un swap instantáneo de imagen, sin ser perceptible como "animación" — dura menos que un parpadeo consciente |
-| **Chip "sitio no reconocido" aparece/desaparece** | Detección de sitio en cada cambio del input | Opacity + height juntos, mismo spring que las filas | ~280ms | Es parte de la misma familia de "el contenido cambia de alto" — consistencia de motion en todo el panel, un solo tipo de curva para todo lo que crece/encoge |
+| **Chip "sitio no reconocido" aparece/desaparece** | Detección de sitio en cada cambio del input, solo en `.input` | Opacity + height juntos, mismo spring que el cambio de alto del panel | ~280ms | Es parte de la misma familia de "el contenido cambia de alto" — consistencia de motion en todo el panel, un solo tipo de curva para todo lo que crece/encoge |
 
 **Reglas explícitas heredadas de las skills de motion (Emil / Apple) aplicadas aquí:**
 - Nunca se usa `ease-in`/`.easeIn` para algo que **entra** — la única excepción documentada arriba es el cierre del panel, que **sale**, no entra.
 - Ninguna animación en esta app supera 300ms — la más larga (280ms, spring de alto) sigue dentro del techo.
-- Ninguna animación tiene bounce/overshoot — no hay un solo gesto de arrastre en toda la app (no hay drag-to-dismiss, no hay swipe); todo el motion es reactivo a datos o a teclado, así que todo usa `dampingFraction: 1.0` o easing simple, nunca `bounce > 0`.
-- El progreso (barra y ring) se trata como dato, no como decoración — se anima con `.linear`/redraw directo, nunca con una curva "bonita" que falsee la velocidad real de la descarga.
+- Ninguna animación tiene bounce/overshoot — no hay un solo gesto de arrastre en toda la app (no hay drag-to-dismiss, no hay swipe); todo el motion es reactivo a datos o a teclado, así que todo usa `dampingFraction: 1.0` o easing simple, nunca `bounce > 0`. El shake de rechazo no es una excepción a esta regla porque no es un gesto de arrastre — es feedback de "acción no aceptada", una categoría distinta (ver fila de la tabla arriba).
+- El progreso (ring) se trata como dato, no como decoración — se anima con `.linear`/redraw directo, nunca con una curva "bonita" que falsee la velocidad real de la descarga.
 
 ### Reduce Motion
 
@@ -326,9 +356,10 @@ Todos los íconos son **template images** (monocromáticos, se re-tintan solos c
 |---|---|
 | Aparición del panel (opacity+scale, 120ms) | Solo opacity, sin scale, misma duración |
 | Cierre del panel (opacity, 80ms) | Sin cambio — ya es solo opacity |
-| Spring de alto del panel / inserción de fila | Cross-fade de opacity únicamente, sin animar el alto (el alto salta directo al valor final) |
-| Crossfade de estado de fila | Se mantiene — es opacity pura, no movimiento, no causa mareo |
-| Progreso de barra (`.linear`) | Se mantiene — es una barra llenándose, no un desplazamiento espacial |
+| Spring de alto del panel (chip de advertencia) | Cross-fade de opacity únicamente, sin animar el alto (el alto salta directo al valor final) |
+| Crossfade de estado del frame | Se mantiene — es opacity pura, no movimiento, no causa mareo |
+| **Shake de rechazo (input durante `.downloading`)** | **Se reemplaza** por un pulso de opacity del frame (1 → 0.6 → 1, 150ms, `.easeInOut`) — sin traslación espacial. La traslación repetida es exactamente el tipo de motion que Reduce Motion existe para evitar; el pulso de opacity comunica "rechazado" sin movimiento |
+| Progreso del ring (`.linear`) | Se mantiene — es un arco llenándose, no un desplazamiento espacial |
 | Crossfade de ícono de menu bar | Se mantiene, misma duración — swap de imagen estática, no movimiento |
 
 ### Reduce Transparency
@@ -342,6 +373,23 @@ Todos los íconos son **template images** (monocromáticos, se re-tintan solos c
 ### Increase Contrast
 
 Fuerza Reduce Transparency ON (ya cubierto arriba) y además: el borde del panel gana un `strokeBorder` de 1pt en `Color(nsColor: .separatorColor)` para no depender solo de la sombra para definir el límite del panel contra el fondo del escritorio.
+
+### VoiceOver — el frame como una sola máquina de estados anunciada
+
+El frame es **un único elemento de accesibilidad combinado** (`.accessibilityElement(children: .combine)`), igual que ya lo era cada `DownloadRowView` — pero ahora, como es el único elemento que cambia de "personalidad" varias veces durante su vida, las **transiciones entre estados se anuncian explícitamente**, no solo se reflejan pasivamente en el `accessibilityLabel`. VoiceOver no relee automáticamente un label que cambia si el foco de VoiceOver no está sobre el elemento en ese instante — y el foco real casi siempre está en el campo de texto (`.input`) o en ningún lado (el usuario alejó la mano del teclado mientras espera). Por eso cada transición dispara un `AccessibilityNotification.Announcement(...)` además de actualizar el label:
+
+| Transición | Anuncio posteado | Label combinado resultante del frame |
+|---|---|---|
+| `.input` → `.downloading` | "Descargando" | "\(título o "Preparando"). Descargando, \(N) por ciento." — el `%` se incluye en el label combinado pero **no** se re-anuncia en cada tick (ver abajo), solo queda disponible si el usuario navega manualmente al elemento |
+| `.downloading` → `.completed` | "Descarga completada: \(título)" | "\(título). Completado." |
+| `.downloading` → `.error` | "Error: \(mensaje de la tabla de razones)" | "\(título o razón). Falló: \(mensaje)." |
+| `.completed`/`.error` → `.input` (por tipear/pegar) | Ninguno — no hace falta: el usuario que acaba de tipear/pegar ya sabe lo que hizo, y el campo de texto real retoma el foco de VoiceOver de forma natural al recibir el carácter | "\(placeholder o texto actual)" (comportamiento nativo del `NSTextField`, sin cambios) |
+| Shake de rechazo (input durante `.downloading`) | "Espera a que termine la descarga actual" | Sin cambio de label — es un anuncio puntual, el frame sigue anunciando "Descargando" |
+
+- **El `%` no se anuncia en cada tick.** El ring (`ProgressRing`) ya es `accessibilityHidden(true)` (heredado de la spec anterior) y el texto "NN%" tampoco dispara un anuncio propio — solo el `AccessibilityNotification.Announcement` de la transición `.input → .downloading` se posta una vez. Anunciar cada cambio de porcentaje (~1/seg) sería spam constante para un usuario de VoiceOver; el valor sigue disponible pasivamente en el label si navegan al elemento con VO+flechas.
+- **Los 2 botones de acción de `.completed` son elementos de accesibilidad independientes**, no absorbidos por el `.combine` del frame — cada uno mantiene su propio `accessibilityLabel` ya definido ("Abrir \(título) en \(app)", "Mostrar \(título) en Finder") y, por ser **siempre visibles** desde este rediseño (no hover-gated, ver sección "El frame" → `.completed`), quedan en el **orden de Tab natural** inmediatamente después del frame — antes este par de botones era inalcanzable sin mouse porque dependía de `onHover`; ahora es navegable por teclado y por VoiceOver sin ninguna acción adicional.
+- **`.error` gana un `accessibilityHint`**: "Escribe o pega un nuevo link para continuar" — comunica el mecanismo de salida (que es puramente gestual/visual, "empieza a escribir") a un usuario que no puede inferirlo de la pantalla.
+- El badge de sitio detectado en `.input` (12pt, texto del nombre del sitio) mantiene su `accessibilityLabel` propio sin cambios — sigue siendo parte del mismo elemento combinado que el campo de texto en ese estado.
 
 ---
 
@@ -367,6 +415,12 @@ Fuerza Reduce Transparency ON (ya cubierto arriba) y además: el borde del panel
 | 2026-07-27 | Fila .queued sin subtítulo visible | Iteración de diseño del usuario — menos ruido visual, solo título centrado; la accesibilidad sigue anunciando "En cola" |
 | 2026-07-27 | Fila .completed sin subtítulo — el check verde comunica el estado | Iteración de diseño del usuario — el check verde ya es suficiente para indicar completado, el subtítulo es ruido visual redundante; la accesibilidad sigue anunciando "Completado" |
 | 2026-07-27 | Fila .completed: se agrega ícono de la app destino (12pt) junto al ícono de Finder en hover | Pedido directo del usuario — permite reabrir el archivo en la app configurada sin depender solo del auto-open al completar; app destino va primero (más cerca del texto), Finder queda como respaldo |
+| 2026-07-27 | **Rediseño: la lista de `DownloadRowView` queda retirada.** Todo el estado de la descarga vive en un único frame que reemplaza el input row — máquina de estados `.input` → `.downloading` → `.completed`/`.error` → `.input`, sin lista debajo. Solo una descarga a la vez. | Pedido directo del usuario. El panel es una superficie de 560pt de ancho que se abre y cierra en segundos — una lista que crece hasta 420pt para mostrar descargas concurrentes contradecía el propio principio de identidad visual de este documento ("instantánea, silenciosa, utilitaria... cualquier elemento que no ayude a pegar/detectar → Enter → confirmar que algo pasa está de más"). Restringir a una descarga a la vez elimina la necesidad de la lista, del `ScrollView` interno y de gestionar N filas simultáneas — el usuario ve exactamente una cosa: qué está pasando con el único link que pegó |
+| 2026-07-27 | El frame mide 52pt fijo en sus 4 estados — nunca cambia de tamaño al cambiar de estado | Elimina la necesidad de animar alto por cambio de estado del frame (antes: "nueva fila insertada" con spring de 280ms); todas las transiciones de estado del frame son crossfade puro, más simple y más rápido de percibir que un contenedor que crece |
+| 2026-07-27 | Rechazo de input durante `.downloading`: shake sutil (±4pt, 3 ciclos, 160ms), no "nada visible" | Un launcher que no reacciona en absoluto a un Cmd+V se lee como colgado, no como "ocupado" — el shake es lenguaje system-native de "acción rechazada" (mismo patrón que contraseña incorrecta de macOS), con override de opacity-pulse bajo Reduce Motion |
+| 2026-07-27 | Salida de `.completed`/`.error` hacia `.input`: cualquier tecla imprimible o ⌘V — sin botón ✕ ni botón "Reintentar" | Consistente con el principio ya registrado "no hay botón CTA visible en el flujo principal — Enter es la acción". El siguiente gesto natural del usuario (escribir/pegar el próximo link) ya limpia el frame solo; un botón de reintento además solo sería útil en 2 de 5 `DownloadFailureReason`, haciendo su utilidad condicional e inconsistente |
+| 2026-07-27 | Botones de acción de `.completed` (app destino + Finder) pasan de hover-only a siempre-visibles | Corrección de accesibilidad real, no solo preferencia visual: hover-only los hacía inalcanzables por teclado/VoiceOver (nunca disparan `onHover`). Al ser ahora el único frame del panel (no una fila más entre varias), mostrarlos siempre no compite por atención con nada más — y los hace navegables por Tab |
+| 2026-07-27 | Al reabrir el panel: `.completed`/`.error` **no sobreviven**, siempre vuelve a `.input` — excepto si hay una descarga real en curso, que vuelve a `.downloading` con su progreso actual | Resuelve el ítem "Sin definir aún" heredado sobre persistencia de filas completadas. `.completed`/`.error` son confirmaciones pensadas para verse una vez, inmediatamente después del evento; si el usuario ya cerró el panel, se asume que las vio. Pero una descarga que sigue corriendo en background no debe "desaparecer" visualmente solo porque se cerró y reabrió el panel |
 
 ---
 
@@ -396,5 +450,6 @@ Fuerza Reduce Transparency ON (ya cubierto arriba) y además: el borde del panel
 
 - [ ] UI de captura de atajo de teclado (hotkey) en Settings — el TRD define las claves de `AppSettings` pero esta pasada de diseño se limitó a las 3 secciones pedidas (app destino, carpeta, calidad)
 - [ ] Qué pasa visualmente si `RegisterEventHotKey` falla porque el atajo ya está tomado (TRD menciona "mostrar alerta clara en Settings" pero no está diseñada)
-- [ ] Comportamiento de filas `.completed` tras varios minutos con el panel abierto (¿se desvanecen solas? ¿quedan indefinidamente hasta que se cierra el panel?) — no está definido en el PRD
 - [ ] Estado de "verificando yt-dlp" al iniciar la app (`YTDLPUpdateService`) — si debe reflejarse en algún lado de la UI o es completamente silencioso
+- [ ] Qué pasa si el usuario intenta cerrar el panel (Escape) mientras el frame está en `.downloading` y luego lo reabre desde el menu bar en vez de la hotkey — el comportamiento especificado (vuelve a `.downloading` con progreso) asume el mismo flujo de apertura sin diferenciar la fuente; no debería importar, pero no fue verificado contra el AppDelegate
+- [ ] Copy exacto del `AccessibilityNotification.Announcement` en inglés para VoiceOver internacional (esta pasada solo definió el copy en español, consistente con el resto de la UI, pero no revisó si el sistema debe localizar los anuncios además de las labels)

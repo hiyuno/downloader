@@ -9,6 +9,7 @@ final class LauncherPanelController: NSObject, NSWindowDelegate {
 
     private let panel: LauncherPanel
     private var isDismissing = false
+    private nonisolated(unsafe) var keyMonitor: Any?
 
     override init() {
         panel = LauncherPanel()
@@ -28,6 +29,12 @@ final class LauncherPanelController: NSObject, NSWindowDelegate {
         }
     }
 
+    deinit {
+        if let keyMonitor {
+            NSEvent.removeMonitor(keyMonitor)
+        }
+    }
+
     var isVisible: Bool { panel.isVisible }
 
     func toggle() {
@@ -36,7 +43,6 @@ final class LauncherPanelController: NSObject, NSWindowDelegate {
 
     func show() {
         isDismissing = false
-        viewModel.clearFinishedFailures()
         viewModel.panelWillShow()
 
         panel.setContentSize(NSSize(width: Theme.Size.panelWidth, height: viewModel.panelHeight))
@@ -45,6 +51,7 @@ final class LauncherPanelController: NSObject, NSWindowDelegate {
         viewModel.isVisible = false
         panel.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        installKeyMonitor()
         // El caret ya está puesto por el focusToken del view model; esto solo dispara
         // la animación de entrada de 120ms sobre una vista ya montada.
         DispatchQueue.main.async { [weak self] in
@@ -56,6 +63,7 @@ final class LauncherPanelController: NSObject, NSWindowDelegate {
         guard panel.isVisible, !isDismissing else { return }
         isDismissing = true
         viewModel.isVisible = false
+        removeKeyMonitor()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + Theme.Motion.panelDismissDuration) { [weak self] in
             guard let self else { return }
@@ -63,6 +71,25 @@ final class LauncherPanelController: NSObject, NSWindowDelegate {
             viewModel.panelDidHide()
             isDismissing = false
         }
+    }
+
+    // MARK: - Captura de teclado a nivel de ventana
+
+    /// Mientras el frame no está en `.input` no hay `NSTextField` real que reciba el
+    /// evento — el panel lo captura a nivel de ventana para poder rechazarlo
+    /// (`.downloading`) o resumir la escritura (`.completed`/`.error`), DESIGN_LIQUID §2.
+    private func installKeyMonitor() {
+        guard keyMonitor == nil else { return }
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self, panel.isKeyWindow else { return event }
+            return viewModel.handleFrameKeyDown(event) ? nil : event
+        }
+    }
+
+    private func removeKeyMonitor() {
+        guard let keyMonitor else { return }
+        NSEvent.removeMonitor(keyMonitor)
+        self.keyMonitor = nil
     }
 
     // MARK: - Geometría

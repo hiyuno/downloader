@@ -16,10 +16,6 @@ enum Theme {
         static let panelPadding: CGFloat = 12
         static let inputRowHeight: CGFloat = 52
         static let inputHorizontalPadding: CGFloat = 16
-        static let inputToList: CGFloat = 8
-        static let rowHeight: CGFloat = 48
-        static let betweenRows: CGFloat = 4
-        static let rowHorizontalPadding: CGFloat = 12
         static let iconToText: CGFloat = 10
         static let inputToChip: CGFloat = 6
         static let chipHeight: CGFloat = 22
@@ -31,7 +27,9 @@ enum Theme {
 
     enum Size {
         static let panelWidth: CGFloat = 560
-        static let panelMaxHeight: CGFloat = 420
+        /// Único frame, sin lista — DESIGN_LIQUID §1: solo dos alturas de panel posibles.
+        static let panelHeightBase: CGFloat = 76
+        static let panelHeightWithChip: CGFloat = 98
         static let rowIcon: CGFloat = 20
         static let siteIcon: CGFloat = 16
         static let progressRing: CGFloat = 18
@@ -74,6 +72,13 @@ enum Theme {
         static let panelDismissDuration: TimeInterval = 0.08
         static let heightChangeDuration: TimeInterval = 0.28
         static let menuBarCrossfadeDuration: TimeInterval = 0.15
+
+        /// Shake de rechazo (input durante `.downloading`): ±4pt, 3 ciclos, 160ms total.
+        static let frameShakeDuration: TimeInterval = 0.16
+        static let frameShakeOffset: CGFloat = 4
+        /// Reduce Motion: pulso de opacity 1→0.6→1 en vez de traslación.
+        static let frameRejectionPulseDuration: TimeInterval = 0.15
+        static let frameRejectionPulseOpacity: Double = 0.6
 
         static func heightChange(reduceMotion: Bool) -> Animation {
             reduceMotion ? .linear(duration: 0) : heightChange
