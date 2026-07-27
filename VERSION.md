@@ -2,15 +2,15 @@
 
 ## Estado actual
 
-- **Publicado actualmente:** ninguno. No hay releases en `hiyuno/downloader_updates` todavía.
+- **Publicado actualmente:** 1.0.0 (build 1), publicado el 2026-07-27.
 - **En el repo (sin publicar):** `MARKETING_VERSION = 1.0`, `CURRENT_PROJECT_VERSION = 1` (valores base en `project.yml`, no corresponden a un release real).
-- **Próxima versión sugerida:** `1.0.0` build `1` — primer release público.
+- **Próxima versión sugerida:** define la próxima cuando toque — este archivo se actualiza en cada release.
 
 ## Historial de releases
 
 | Versión | Build | Fecha | Notas |
 |---------|-------|-------|-------|
-| — | — | — | (todavía no hay releases publicados) |
+| 1.0.0 | 1 | 2026-07-27 | — |
 
 ## Regla de oro
 
