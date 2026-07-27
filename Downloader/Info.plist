@@ -30,7 +30,7 @@
     <false/>
     <key>SUFeedURL</key>
     <string>https://raw.githubusercontent.com/hiyuno/downloader_updates/main/appcast.xml</string>
-    <!-- Clave pública EdDSA de Sparkle — cuenta de Keychain 'Downloader' (sign_update --account Downloader) -->
+    <!-- Clave pública EdDSA de Sparkle — cuenta de Keychain 'Downloader' (firmar con sign_update, flag account=Downloader) -->
     <key>SUPublicEDKey</key>
     <string>eDlLaxtYZq4vVZE9gXTSzpz0W/9aSmQgW69MsIczu9Q=</string>
     <key>SUEnableAutomaticChecks</key>
