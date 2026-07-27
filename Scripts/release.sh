@@ -217,13 +217,27 @@ $(python3 - <<PY
 import re, sys
 
 content = """${APPCAST_REMOTE_CONTENT}"""
-versions = [int(v) for v in re.findall(r'sparkle:version="(\\d+)"', content)]
+# El appcast real usa sintaxis de elemento (<sparkle:version>N</sparkle:version>),
+# no de atributo (sparkle:version="N") -- soportamos ambas por robustez.
+versions = [int(v) for v in re.findall(r'<sparkle:version>(\\d+)</sparkle:version>', content)]
+versions += [int(v) for v in re.findall(r'sparkle:version="(\\d+)"', content)]
 if not versions:
     print("0 none")
 else:
     max_v = max(versions)
-    # shortVersionString del item con ese sparkle:version
-    m = re.search(r'sparkle:version="%d"[^>]*sparkle:shortVersionString="([^"]+)"' % max_v, content)
+    # shortVersionString del item con ese sparkle:version (sintaxis de elemento)
+    m = re.search(
+        r'<sparkle:version>%d</sparkle:version>\\s*<sparkle:shortVersionString>([^<]+)</sparkle:shortVersionString>' % max_v,
+        content,
+    )
+    if not m:
+        m = re.search(
+            r'<sparkle:shortVersionString>([^<]+)</sparkle:shortVersionString>\\s*<sparkle:version>%d</sparkle:version>' % max_v,
+            content,
+        )
+    if not m:
+        # fallback a sintaxis de atributo por si algún appcast viejo la usa
+        m = re.search(r'sparkle:version="%d"[^>]*sparkle:shortVersionString="([^"]+)"' % max_v, content)
     if not m:
         m = re.search(r'sparkle:shortVersionString="([^"]+)"[^>]*sparkle:version="%d"' % max_v, content)
     short = m.group(1) if m else "none"
@@ -504,7 +518,12 @@ for ln in lines:
     stripped = ln.strip()
     if not stripped:
         continue
-    if stripped.startswith("### "):
+    if stripped.startswith("## "):
+        if in_list:
+            html_lines.append("</ul>")
+            in_list = False
+        html_lines.append(f"<h2>{html.escape(stripped[3:])}</h2>")
+    elif stripped.startswith("### "):
         if in_list:
             html_lines.append("</ul>")
             in_list = False
@@ -514,10 +533,13 @@ for ln in lines:
             html_lines.append("<ul>")
             in_list = True
         html_lines.append(f"<li>{html.escape(stripped[2:])}</li>")
+    elif in_list:
+        # Línea de continuación de un bullet envuelto en varias líneas del
+        # markdown: se concatena al último <li> en vez de cerrar la lista.
+        last = html_lines[-1]
+        assert last.endswith("</li>")
+        html_lines[-1] = last[: -len("</li>")] + " " + html.escape(stripped) + "</li>"
     else:
-        if in_list:
-            html_lines.append("</ul>")
-            in_list = False
         html_lines.append(f"<p>{html.escape(stripped)}</p>")
 if in_list:
     html_lines.append("</ul>")
