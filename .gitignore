@@ -1,6 +1,6 @@
-# Repos clonados de referencia (no forman parte de la app)
-AppleAppLab/
-skills/
+# Repos clonados de referencia (no forman parte de la app) — anclados a la raíz
+/AppleAppLab/
+/skills/
 
 # macOS
 .DS_Store
