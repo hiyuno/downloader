@@ -1,12 +1,14 @@
 import AppKit
 import OSLog
+import Sparkle
 import SwiftUI
 
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency SPUStandardUserDriverDelegate {
     private let panelController = LauncherPanelController()
     private let hotkeyService = HotkeyService()
     private var statusItem: NSStatusItem!
+    private var updaterController: SPUStandardUpdaterController!
 
     private var iconState: MenuBarIconRenderer.State = .idle
     private var lastRenderedState: MenuBarIconRenderer.State = .idle
@@ -18,6 +20,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         NotificationService.shared.activate()
+
+        updaterController = SPUStandardUpdaterController(
+            startingUpdater: true,
+            updaterDelegate: nil,
+            userDriverDelegate: self
+        )
 
         setUpStatusItem()
         setUpHotkey()
@@ -66,6 +74,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             withTitle: "Ajustes…",
             action: #selector(openSettings),
             keyEquivalent: ","
+        ).target = self
+        menu.addItem(.separator())
+        menu.addItem(
+            withTitle: "Buscar actualizaciones…",
+            action: #selector(checkForUpdates),
+            keyEquivalent: ""
         ).target = self
         menu.addItem(.separator())
         menu.addItem(
@@ -158,5 +172,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func openSettings() {
         Logger.settings.notice("menu item \"Ajustes…\" clickeado")
         SettingsWindowController.shared.openSettings()
+    }
+
+    @objc private func checkForUpdates() {
+        updaterController.checkForUpdates(nil)
+    }
+
+    // MARK: - Sparkle (SPUStandardUserDriverDelegate)
+
+    /// Esta app es `.accessory` (LSUIElement) y no tiene ventana ni ítem de Dock por
+    /// defecto, así que el diálogo de Sparkle no puede activarse solo. Se aplica el
+    /// mismo patrón que `SettingsWindowController`: activar temporalmente como app
+    /// `.regular` mientras el diálogo está visible, y restaurar `.accessory` al cerrarlo.
+    func standardUserDriverWillShowModalAlert() {
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    func standardUserDriverDidShowModalAlert() {
+        NSApp.setActivationPolicy(.accessory)
     }
 }

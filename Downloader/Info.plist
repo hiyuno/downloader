@@ -28,5 +28,14 @@
     <string>NSApplication</string>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
+    <key>SUFeedURL</key>
+    <string>https://raw.githubusercontent.com/hiyuno/downloader_updates/main/appcast.xml</string>
+    <!-- Clave pública EdDSA de Sparkle — cuenta de Keychain 'Downloader' (sign_update --account Downloader) -->
+    <key>SUPublicEDKey</key>
+    <string>eDlLaxtYZq4vVZE9gXTSzpz0W/9aSmQgW69MsIczu9Q=</string>
+    <key>SUEnableAutomaticChecks</key>
+    <true/>
+    <key>SUScheduledCheckInterval</key>
+    <integer>86400</integer>
 </dict>
 </plist>

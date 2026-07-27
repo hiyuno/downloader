@@ -11,6 +11,7 @@
 		06B154393A3C0029304A4AF6 /* YTDLPProgressParsingHostileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A099DF91DA760426484D6A62 /* YTDLPProgressParsingHostileTests.swift */; };
 		16E8D52894B5D594439C39DE /* YTDLPErrorMappingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000B8F7BCA3FE9FDAEE3990B /* YTDLPErrorMappingTests.swift */; };
 		17241163D57D29AC0D8BEDD1 /* LauncherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C3C28FF04B07FCC20B9C60E /* LauncherView.swift */; };
+		1B9BB06BFC3A88847F49CBD4 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 99D04D9F5E2F5A636E72978E /* Sparkle */; };
 		1F000F18ECC6AED3F1873DD6 /* GlassBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF81BD5102C5EF503E5D449 /* GlassBackground.swift */; };
 		20095973F32F15584F86A96E /* LauncherViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570F5261831170DD422DDD95 /* LauncherViewModel.swift */; };
 		24F4CD0393B2AB3012B54597 /* DownloadProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = F66B79DDF251481C3346201F /* DownloadProgress.swift */; };
@@ -107,6 +108,17 @@
 		F8B0B99089FED1617DD6EA2B /* AppSettingsBookmarkFallbackTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsBookmarkFallbackTests.swift; sourceTree = "<group>"; };
 		FDCCFC813A8F6ED092B82C88 /* Logger+Downloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Logger+Downloader.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		9E7A97EFCDC6025332E38887 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1B9BB06BFC3A88847F49CBD4 /* Sparkle in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		04A0F5A85979595FEBA3BFD8 /* Resources */ = {
@@ -284,6 +296,7 @@
 				CC39EAEC35F07FAC86DE0B99 /* Sources */,
 				91B727517CFC98F999B3FE93 /* Embed & Sign yt-dlp / ffmpeg */,
 				F8AF638D89A1EDD029C2D9D6 /* Resources */,
+				9E7A97EFCDC6025332E38887 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -291,6 +304,7 @@
 			);
 			name = Downloader;
 			packageProductDependencies = (
+				99D04D9F5E2F5A636E72978E /* Sparkle */,
 			);
 			productName = Downloader;
 			productReference = ADB5D21EEB8BE5FFDD6DF47E /* Downloader.app */;
@@ -306,11 +320,9 @@
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					353E3ABB27E4FA511BB0A249 = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Manual;
 					};
 					BCC7867334AA56081D4F8DDD = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Manual;
 					};
 				};
@@ -324,6 +336,9 @@
 			);
 			mainGroup = 5879EFB4B3F072FB276C240D;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				0562F194DD0390049DEE5F4E /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 4C93F4D745D11EC8A95C8CC3 /* Products */;
 			projectDirPath = "";
@@ -605,13 +620,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 449S639443;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -667,6 +682,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		0562F194DD0390049DEE5F4E /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.6.4;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		99D04D9F5E2F5A636E72978E /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0562F194DD0390049DEE5F4E /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 950BC232E23A8D5613AF0286 /* Project object */;
 }

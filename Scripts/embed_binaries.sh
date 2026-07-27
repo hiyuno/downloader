@@ -41,7 +41,14 @@ for tool in yt-dlp ffmpeg; do
       sign_identity="-"
     fi
 
-    codesign --force --options runtime --timestamp=none \
+    # El timestamp de firma requiere red y no aplica a firma ad-hoc ("-"):
+    # solo lo pedimos cuando la identidad es una identidad real (Developer ID).
+    timestamp_flag="--timestamp=none"
+    if [ "${sign_identity}" != "-" ]; then
+      timestamp_flag="--timestamp"
+    fi
+
+    codesign --force --options runtime ${timestamp_flag} \
       --entitlements "${SRCROOT}/Downloader/Downloader.entitlements" \
       --sign "${sign_identity}" \
       "${DEST_DIR}/${tool}" \

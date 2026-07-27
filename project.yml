@@ -17,9 +17,8 @@ settings:
     DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
     DEAD_CODE_STRIPPING: YES
     ENABLE_HARDENED_RUNTIME: YES
-    # Firma: ad-hoc para poder compilar sin Team ID.
-    # Para notarizar: CODE_SIGN_STYLE=Automatic + DEVELOPMENT_TEAM=<TeamID>
-    # y CODE_SIGN_IDENTITY="Developer ID Application".
+    # Firma: ad-hoc en Debug para poder compilar sin Team ID (ciclo de desarrollo diario).
+    # Release firma con la identidad Developer ID real — ver settings.configs.Release abajo.
     CODE_SIGN_STYLE: Manual
     CODE_SIGN_IDENTITY: "-"
     DEVELOPMENT_TEAM: ""
@@ -32,6 +31,15 @@ settings:
     Release:
       SWIFT_OPTIMIZATION_LEVEL: "-Osize"
       SWIFT_COMPILATION_MODE: wholemodule
+      # Distribución directa (Developer ID) — Team ID confirmado: Gabriel Razo (449S639443).
+      CODE_SIGN_STYLE: Manual
+      CODE_SIGN_IDENTITY: "Developer ID Application"
+      DEVELOPMENT_TEAM: "449S639443"
+
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: 2.6.4
 
 targets:
   Downloader:
@@ -51,6 +59,8 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         COMBINE_HIDPI_IMAGES: YES
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
+    dependencies:
+      - package: Sparkle
     postCompileScripts:
       - name: "Embed & Sign yt-dlp / ffmpeg"
         script: |
