@@ -379,6 +379,14 @@ hdiutil create -volname "${APP_NAME}" \
 
 echo "  - DMG creado: ${DMG_PATH}"
 
+# hdiutil no firma el DMG. Sin firma, notarytool igual acepta el envío (solo
+# notariza el contenido firmado dentro), pero `spctl -a --type install` sobre
+# el DMG grapado falla con "no usable signature" — Gatekeeper necesita una
+# firma Developer ID válida en el contenedor, no solo el ticket grapado.
+codesign --force --sign "${SIGN_IDENTITY}" --timestamp "${DMG_PATH}" \
+  || abort "codesign del DMG falló"
+echo "  - DMG firmado con '${SIGN_IDENTITY}'"
+
 DMG_SHA_LOCAL="$(shasum -a 256 "${DMG_PATH}" | awk '{print $1}')"
 DMG_SIZE_BYTES="$(stat -f%z "${DMG_PATH}")"
 echo "  - sha256 local (pre-notarización... se recalcula tras staple): ${DMG_SHA_LOCAL}"
