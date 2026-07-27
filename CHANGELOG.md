@@ -7,6 +7,10 @@ y este proyecto usa [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+(sin cambios todavía)
+
+## [1.1.0] - 2026-07-27
+
 ### Changed
 
 - **Rediseño del launcher: ahora es un solo panel, no una lista.** Downloader
