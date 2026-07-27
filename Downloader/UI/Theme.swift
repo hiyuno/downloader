@@ -33,8 +33,8 @@ enum Theme {
         static let panelMaxHeight: CGFloat = 420
         static let rowIcon: CGFloat = 20
         static let siteIcon: CGFloat = 16
-        static let progressBarWidth: CGFloat = 64
-        static let progressBarHeight: CGFloat = 4
+        static let progressRing: CGFloat = 18
+        static let progressRingLineWidth: CGFloat = 2
         static let menuBarIcon: CGFloat = 18
         static let settings = CGSize(width: 480, height: 360)
     }
@@ -54,7 +54,6 @@ enum Theme {
         static let rowFill = Color.primary.opacity(0.04)
         static let rowFillReduceTransparency = Color.primary.opacity(0.08)
         static let failedRowFill = Color.red.opacity(0.08)
-        static let progressTrack = Color.primary.opacity(0.1)
         static let frostStroke = Color.white.opacity(0.15)
         static let separator = Color(nsColor: .separatorColor)
         static let opaquePanel = Color(nsColor: .windowBackgroundColor)

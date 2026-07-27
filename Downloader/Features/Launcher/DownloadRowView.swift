@@ -18,17 +18,24 @@ struct DownloadRowView: View {
                 .transition(.opacity)
 
             VStack(alignment: .leading, spacing: 1) {
+                shouldCenterVertically
+
                 Text(task.displayTitle)
                     .scaledFont(size: 13, weight: .regular)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                     .truncationMode(.middle)
-                Text(subtitle)
-                    .scaledFont(size: 11, weight: .regular)
-                    .foregroundStyle(subtitleColor)
-                    .lineLimit(1)
-                    .id(subtitle)
-                    .transition(.opacity)
+
+                if !subtitle.isEmpty {
+                    Text(subtitle)
+                        .scaledFont(size: 11, weight: .regular)
+                        .foregroundStyle(subtitleColor)
+                        .lineLimit(1)
+                        .id(subtitle)
+                        .transition(.opacity)
+                }
+
+                shouldCenterVertically
             }
 
             Spacer(minLength: 8)
@@ -95,15 +102,23 @@ struct DownloadRowView: View {
     private var subtitle: String {
         switch task.state {
         case .queued:
-            "En cola"
-        case .downloading(_, let speed, let eta):
-            if let speed, let eta { "\(speed) · \(eta)" }
-            else if let speed { speed }
-            else { "Descargando… (sin progreso detallado)" }
+            ""
+        case .downloading:
+            ""
         case .completed:
-            "Completado"
+            ""
         case .failed(let reason):
             reason.message
+        }
+    }
+
+    @ViewBuilder
+    private var shouldCenterVertically: some View {
+        switch task.state {
+        case .downloading, .queued, .completed:
+            Spacer(minLength: 0)
+        default:
+            EmptyView()
         }
     }
 
@@ -116,7 +131,15 @@ struct DownloadRowView: View {
     private var trailingAccessory: some View {
         switch task.state {
         case .downloading(let percent, _, _):
-            ProgressPill(percent: percent)
+            HStack(spacing: 4) {
+                Text("\(Int(percent * 100))%")
+                    .scaledFont(size: 11, weight: .regular)
+                    .foregroundStyle(.white)
+                    .monospacedDigit()
+                    .accessibilityHidden(true)
+
+                ProgressRing(percent: percent)
+            }
         case .completed(let fileURL):
             Button {
                 onReveal(fileURL)

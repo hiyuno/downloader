@@ -34,8 +34,8 @@
 		8CB1086AEBCD12C794371687 /* LauncherPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FE5E616387CD1D38810F872 /* LauncherPanel.swift */; };
 		93773AB3AF958C9A425D75E3 /* InlineChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1CDE8F3412C48ADF8294F48 /* InlineChip.swift */; };
 		93961B65F65889EE6BFF6C3B /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34D26EABAA25EE456168FA7D /* Theme.swift */; };
+		985A336B5817FBEFD964B56F /* ProgressRing.swift in Sources */ = {isa = PBXBuildFile; fileRef = D80F5277B6356FAD8447E117 /* ProgressRing.swift */; };
 		A6D3E939910ADE82DA986E48 /* AppPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CFC5FDEDC126AD372AB7851 /* AppPickerView.swift */; };
-		C45F47A9C178D3756567AF27 /* ProgressPill.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70ECD869C4B9D3DE339C5E13 /* ProgressPill.swift */; };
 		C8770D469681A8902038750B /* LauncherPanelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5469894D546D03CD933A068 /* LauncherPanelController.swift */; };
 		D0919E2EE72F70B037353992 /* AppSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D47B6A3E3FB50B037A44FF47 /* AppSettingsTests.swift */; };
 		D3FB22AE8754D26BAB6469FD /* AppSettingsBookmarkFallbackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B0B99089FED1617DD6EA2B /* AppSettingsBookmarkFallbackTests.swift */; };
@@ -80,7 +80,6 @@
 		5EF3A11F87120B94C36C5D36 /* SettingsWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowController.swift; sourceTree = "<group>"; };
 		5FF81BD5102C5EF503E5D449 /* GlassBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassBackground.swift; sourceTree = "<group>"; };
 		6226884B355C04D0823274C8 /* MenuBarIconRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarIconRenderer.swift; sourceTree = "<group>"; };
-		70ECD869C4B9D3DE339C5E13 /* ProgressPill.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressPill.swift; sourceTree = "<group>"; };
 		7A57B68BBA4A2885AFF6FC96 /* DownloaderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloaderApp.swift; sourceTree = "<group>"; };
 		7BEC8804C8971C923C2842B8 /* DownloadRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadRowView.swift; sourceTree = "<group>"; };
 		7C3C28FF04B07FCC20B9C60E /* LauncherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LauncherView.swift; sourceTree = "<group>"; };
@@ -99,6 +98,7 @@
 		D04661A14CF17BEEE9811C90 /* HotkeyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyService.swift; sourceTree = "<group>"; };
 		D47B6A3E3FB50B037A44FF47 /* AppSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsTests.swift; sourceTree = "<group>"; };
 		D5469894D546D03CD933A068 /* LauncherPanelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LauncherPanelController.swift; sourceTree = "<group>"; };
+		D80F5277B6356FAD8447E117 /* ProgressRing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressRing.swift; sourceTree = "<group>"; };
 		EA1BD4902CAA1ACF0EF1E812 /* ScaledFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScaledFont.swift; sourceTree = "<group>"; };
 		EA4185B66A1CF8DD5C03ED17 /* BundledBinaries.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundledBinaries.swift; sourceTree = "<group>"; };
 		EA57A3C7B41A11CFC12AF617 /* URLValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLValidator.swift; sourceTree = "<group>"; };
@@ -187,7 +187,7 @@
 			children = (
 				C1CDE8F3412C48ADF8294F48 /* InlineChip.swift */,
 				6226884B355C04D0823274C8 /* MenuBarIconRenderer.swift */,
-				70ECD869C4B9D3DE339C5E13 /* ProgressPill.swift */,
+				D80F5277B6356FAD8447E117 /* ProgressRing.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -409,7 +409,7 @@
 				DCD2DA7742A12D0942543661 /* Logger+Downloader.swift in Sources */,
 				F015C9AEC59BCCA1F3AE2E17 /* MenuBarIconRenderer.swift in Sources */,
 				E9FAE15BD464D16709914DCA /* NotificationService.swift in Sources */,
-				C45F47A9C178D3756567AF27 /* ProgressPill.swift in Sources */,
+				985A336B5817FBEFD964B56F /* ProgressRing.swift in Sources */,
 				2630FD8D509CAD9BE9831FF2 /* ScaledFont.swift in Sources */,
 				63F303F17355912DD3062DAE /* SettingsView.swift in Sources */,
 				4E159631461EFECB98C381C6 /* SettingsViewModel.swift in Sources */,

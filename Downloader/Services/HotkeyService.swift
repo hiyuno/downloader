@@ -35,7 +35,11 @@ final class HotkeyService {
             { _, _, userData -> OSStatus in
                 guard let userData else { return noErr }
                 // Solo cruza el puntero opaco (Sendable); la instancia se recupera en main.
-                DispatchQueue.main.async {
+                // QoS explícito: el hilo de despacho de eventos de Carbon corre a QoS
+                // Default, no user-interactive. `.async` sin QoS heredaría ese nivel bajo
+                // para todo lo que dispara abrir el panel (foco del input incluido),
+                // generando inversión de prioridad contra el window server.
+                DispatchQueue.main.async(qos: .userInteractive) {
                     let service = Unmanaged<HotkeyService>.fromOpaque(userData).takeUnretainedValue()
                     MainActor.assumeIsolated { service.onHotkeyPressed?() }
                 }

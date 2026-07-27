@@ -65,7 +65,7 @@ Ninguno. Fuera de alcance para v1 — ver principio de identidad visual arriba.
 |----------|--------------|-----|
 | Input del launcher | 20pt Regular, `.rounded` design | texto que el usuario pega o escribe |
 | Placeholder del input | 20pt Regular, `.tertiary` | "Pega un link…" |
-| Sitio detectado (badge) | 12pt Medium | "YouTube", "TikTok", junto al input |
+| Sitio detectado (badge, solo nombre) | 12pt Medium | "YouTube", "TikTok", a la izquierda del input (sin ícono) |
 | Título de fila (nombre de archivo / título del video) | 13pt Regular | línea principal de `DownloadRowView` |
 | Subtítulo de fila (%, velocidad, ETA, razón de error) | 11pt Regular, `.secondary` | línea secundaria de la fila |
 | Chip de advertencia ("sitio no reconocido") | 11pt Regular, `.orange` | bajo el input, no bloqueante |
@@ -176,7 +176,7 @@ struct GlassPanelBackground: ViewModifier {
 El ancho **nunca** cambia — solo el alto. Esto evita que el panel "salte" horizontalmente y rompa la posición centrada calculada al abrir (TRD sección 2: centrado en la pantalla del cursor).
 
 **Layout vertical (de arriba hacia abajo):**
-1. Input row (52pt) — ícono de sitio a la izquierda (16×16pt SF Symbol) si hay URL válida, campo de texto ocupando el resto, sin botón de submit visible (Enter es la acción, no hay affordance visual redundante — coherente con "cero fricción, cero decisiones" del PRD)
+1. Input row (52pt) — nombre del sitio (12pt Medium, si sitio reconocido) a la izquierda, campo de texto ocupando el resto, sin botón de submit visible (Enter es la acción, no hay affordance visual redundante — coherente con "cero fricción, cero decisiones" del PRD). Nota: a partir de 2026-07-27, el ícono de sitio fue removido; queda solo el nombre.
 2. Chip de advertencia (solo si sitio no reconocido) — 22pt, aparece/desaparece con el input, no empuja layout con salto brusco (ver Animaciones)
 3. Lista de `DownloadRowView`, una por descarga activa, orden: más reciente arriba
 
@@ -197,9 +197,9 @@ El ancho **nunca** cambia — solo el alto. Esto evita que el panel "salte" hori
 
 | Estado | Ícono | Color ícono | Título | Subtítulo | Trailing accessory | Fondo de fila |
 |---|---|---|---|---|---|---|
-| `.queued` | `clock` | `.secondary` | Nombre de archivo estimado o "Preparando…" | "En cola" | — | `Color.primary.opacity(0.04)` |
-| `.downloading(percent, speed, eta)` | `arrow.down.circle` (o el ring de progreso, ver abajo) | `Color.accentColor` | Título del video | "\(speed) · \(eta)" o "Descargando… (sin progreso detallado)" si `speed`/`eta` son `nil` (fallback del parser, TRD riesgo #3) | Progress bar pill, 64pt ancho, a la derecha | `Color.primary.opacity(0.04)` |
-| `.completed(fileURL)` | `checkmark.circle.fill` | `.green` | Nombre de archivo final | "Completado" | — (o ícono de "abrir en Finder" 16pt, secundario, si el usuario hace hover — ver Interacciones) | `Color.primary.opacity(0.04)` |
+| `.queued` | `clock` | `.secondary` | Nombre de archivo estimado o "Preparando…" | (vacío — sin subtítulo en este estado) | — | `Color.primary.opacity(0.04)` |
+| `.downloading(percent, speed, eta)` | `arrow.down.circle` | `Color.accentColor` | Título del video | (vacío — sin subtítulo en este estado) | "99%" (11pt `.white` monospacedDigit) + Ring de progreso circular (18pt, blanco), alineados horizontalmente, spacing 4pt entre texto y ring | `Color.primary.opacity(0.04)` |
+| `.completed(fileURL)` | `checkmark.circle.fill` | `.green` | Nombre de archivo final | (vacío — el check verde comunica el estado) | — (o ícono de "abrir en Finder" 16pt, secundario, si el usuario hace hover — ver Interacciones) | `Color.primary.opacity(0.04)` |
 | `.failed(reason)` | `exclamationmark.triangle.fill` | `.red` | Título del video (si se alcanzó a obtener) o la URL cruda | Mensaje legible por `DownloadFailureReason` (tabla abajo) | — | `Color.red.opacity(0.08)` |
 
 **Mapeo de `DownloadFailureReason` a texto legible (nunca mostrar el enum crudo ni el stderr de yt-dlp sin traducir):**
@@ -219,10 +219,11 @@ Esta distinción es la que el PRD pide explícitamente (riesgo: "sitio cambió" 
 - Ícono `questionmark.circle`, color `.orange`, texto 11pt: "Sitio no reconocido — se intentará de todas formas".
 - **No bloquea el submit.** Enter funciona igual; el chip es puramente informativo. Si el usuario da Enter, el chip desaparece y aparece la fila en `.queued` como con cualquier otro sitio.
 
-**Progress bar de la fila `.downloading` (pill, 999pt de radio en ambas capas):**
-- Track: `Color.primary.opacity(0.1)`, 4pt de alto, 64pt de ancho
-- Fill: `Color.accentColor`, mismo alto, ancho = `percent * 64pt`
-- El fill se redondea igual en ambos extremos (pill) incluso cuando `percent` es bajo — nunca un rectángulo con una esquina recta
+**Ring de progreso de la fila `.downloading` (`ProgressRing`, SwiftUI, 18pt):**
+- Mismo concepto visual que el ring del menu bar (`MenuBarIconRenderer`): track + arco, dibujado con un `Circle().trim()` en vez de `Core Graphics` porque aquí sí vive dentro del entorno de una vista SwiftUI normal.
+- Track: `Color.white.opacity(0.15)`, 2pt de grosor.
+- Arco: `Color.white`, mismo grosor, `lineCap: .round`, arranca a las 12 en punto (rotación de −90°) y avanza en sentido horario según `percent`.
+- Acompañado a su izquierda por un `Text` que muestra "\(Int(percent * 100))%", 11pt `.white`, con `monospacedDigit()` para evitar jitter al cambiar dígitos. El ring es puramente visual (`accessibilityHidden(true)`); el `%` ya se anuncia una sola vez, en el `accessibilityLabel` combinado de la fila.
 
 ---
 
@@ -348,6 +349,14 @@ Fuerza Reduce Transparency ON (ya cubierto arriba) y además: el borde del panel
 | 2026-07-26 | Ícono de menu bar prioriza error > descargando > idle cuando hay múltiples descargas | El usuario necesita saber que algo falló sin tener que abrir el panel; el progreso de las que sí van bien se ve al abrir |
 | 2026-07-26 | Corregida tabla de alturas (doble conteo de panelPadding) | Detectado por Woz al aplicar review de Larry; el layout real usa 8pt entre input y lista |
 | 2026-07-26 | Ícono de sitio en el input (`LauncherView`, frame 16×16) se mantiene a **13pt**, no se sube a 16pt como propuso Larry en review | El frame de 16×16 es una caja de alineación compartida (`Theme.Size.siteIcon`, reusada en Settings para íconos de 16×16), no una instrucción de "llena el cuadro". 13pt es el mismo tamaño de símbolo que usa `DownloadRowView` (que tampoco fuerza el símbolo al tamaño de su frame de 20pt) y empareja ópticamente con el badge "sitio detectado" de 12pt Medium que aparece junto al ícono — son la misma familia de metadata visual. Subir a 16pt (ratio 1:1 con el frame) rompería esa consistencia y, para símbolos con arte más ancho, puede desbordar ópticamente el frame en vez de quedar bien inscrito — un símbolo a `size: 16` no siempre cabe con margen dentro de una caja de 16pt, mientras que un ratio símbolo:frame de ~0.8 (13/16) es el que produce el inset correcto que ya usa el resto de la app. |
+| 2026-07-26 | Fila downloading: % en subtítulo izquierdo + ring circular en vez de barra | Pedido directo del usuario; consistencia visual con el ring del menu bar |
+| 2026-07-26 | El % se muestra junto al ring (trailing accessory), no en el subtítulo | Iteración de diseño del usuario — mejora legibilidad (subtítulo = speed · eta solo) y alineación visual con el ring |
+| 2026-07-26 | Fila downloading sin subtítulo de velocidad/ETA | Iteración de diseño del usuario — menos ruido visual, solo [icono] [título] [spacer] [% + ring] con título centrado |
+| 2026-07-26 | Badge del sitio al lado izquierdo del input | Iteración de diseño del usuario — layout: [ícono + nombre del sitio] [campo de URL] en lugar de [ícono] [campo] [nombre] |
+| 2026-07-27 | Input sin ícono de sitio — solo el nombre | Iteración de diseño del usuario — layout: [nombre del sitio] [campo de URL], quita ícono de SF Symbol; reduce visual clutter en una ventana compacta |
+| 2026-07-27 | % y ring de la fila .downloading en blanco en vez de accentColor/secondary | Iteración de diseño del usuario — mejor contraste sobre el glass |
+| 2026-07-27 | Fila .queued sin subtítulo visible | Iteración de diseño del usuario — menos ruido visual, solo título centrado; la accesibilidad sigue anunciando "En cola" |
+| 2026-07-27 | Fila .completed sin subtítulo — el check verde comunica el estado | Iteración de diseño del usuario — el check verde ya es suficiente para indicar completado, el subtítulo es ruido visual redundante; la accesibilidad sigue anunciando "Completado" |
 
 ---
 

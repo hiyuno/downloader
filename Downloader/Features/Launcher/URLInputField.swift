@@ -51,7 +51,12 @@ struct URLInputField: NSViewRepresentable {
         guard context.coordinator.lastFocusToken != focusToken else { return }
         context.coordinator.lastFocusToken = focusToken
         // Mismo ciclo de runloop que makeKeyAndOrderFront — sin delay artificial.
-        DispatchQueue.main.async {
+        // QoS explícito: este bloque puede encolarse desde el callback de Carbon del
+        // atajo global (HotkeyService), que corre a QoS Default. `.async` sin QoS
+        // hereda ese QoS bajo, y como `makeFirstResponder` habla con el window server
+        // (que espera a QoS user-interactive), se produce una inversión de prioridad.
+        // Fijar `.userInteractive` aquí evita la herencia sin tocar el timing.
+        DispatchQueue.main.async(qos: .userInteractive) {
             guard let window = field.window else { return }
             window.makeFirstResponder(field)
             field.currentEditor()?.selectAll(nil)
