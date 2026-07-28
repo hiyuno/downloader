@@ -7,6 +7,10 @@ y este proyecto usa [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+(sin cambios todavía)
+
+## [1.1.1] - 2026-07-28
+
 ### Changed
 
 - **Transición más clara al descargar y al completar.** El panel ahora anima

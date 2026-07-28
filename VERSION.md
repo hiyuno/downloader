@@ -2,7 +2,7 @@
 
 ## Estado actual
 
-- **Publicado actualmente:** 1.1.0 (build 2), publicado el 2026-07-27.
+- **Publicado actualmente:** 1.1.1 (build 3), publicado el 2026-07-28.
 - **En el repo (sin publicar):** `MARKETING_VERSION = 1.0`, `CURRENT_PROJECT_VERSION = 1` (valores base en `project.yml`, no corresponden a un release real).
 - **Próxima versión sugerida:** define la próxima cuando toque — este archivo se actualiza en cada release.
 
@@ -13,6 +13,8 @@
 | 1.0.0 | 1 | 2026-07-27 | — |
 
 | 1.1.0 | 2 | 2026-07-27 | — |
+
+| 1.1.1 | 3 | 2026-07-28 | — |
 
 ## Regla de oro
 
