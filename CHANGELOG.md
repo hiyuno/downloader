@@ -7,6 +7,10 @@ y este proyecto usa [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+(sin cambios todavía)
+
+## [1.2.0] - 2026-07-28
+
 ### Fixed
 
 - **Instagram videos now play correctly.** Some Instagram downloads were
