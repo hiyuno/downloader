@@ -53,7 +53,7 @@ final class SettingsViewModel {
             folderError = nil
         } catch {
             Logger.settings.error("Bookmark falló: \(error.localizedDescription, privacy: .public)")
-            folderError = "No se pudo guardar el acceso a esa carpeta."
+            folderError = "Couldn't save access to that folder."
         }
     }
 }

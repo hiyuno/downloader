@@ -37,7 +37,7 @@ final class LauncherViewModel {
     private var lastReportedHeight: CGFloat = 0
     private var lastReportedState: MenuBarIconRenderer.State = .idle
 
-    let placeholder = "Pega un link de YouTube, TikTok, Instagram…"
+    let placeholder = "Paste a YouTube, TikTok, Instagram… link"
 
     var binariesMissing: Bool { !BundledBinaries.isReady }
 
@@ -48,10 +48,10 @@ final class LauncherViewModel {
     var chip: (kind: InlineChip.Kind, symbol: String, text: String)? {
         guard frameState == .input else { return nil }
         if binariesMissing {
-            return (.error, "exclamationmark.triangle", "Falta yt-dlp — colócalo en Resources/bin (ver README)")
+            return (.error, "exclamationmark.triangle", "yt-dlp missing — place it in Resources/bin (see README)")
         }
         if showsUnrecognizedSiteChip {
-            return (.warning, "questionmark.circle", "Sitio no reconocido — se intentará de todas formas")
+            return (.warning, "questionmark.circle", "Site not recognized — will try anyway")
         }
         return nil
     }
@@ -68,7 +68,7 @@ final class LauncherViewModel {
     /// Título mostrado en `.downloading` — "Preparando…" hasta que yt-dlp reporte el
     /// título real (DESIGN_LIQUID §2, tabla de `.downloading`).
     var downloadingTitle: String {
-        currentDownload?.title.flatMap { $0.isEmpty ? nil : $0 } ?? "Preparando…"
+        currentDownload?.title.flatMap { $0.isEmpty ? nil : $0 } ?? "Preparing…"
     }
 
     var downloadingTitleIsPlaceholder: Bool {
@@ -234,7 +234,7 @@ final class LauncherViewModel {
 
     private func rejectInputDuringDownload() {
         rejectionTick += 1
-        AccessibilityNotification.Announcement("Espera a que termine la descarga actual").post()
+        AccessibilityNotification.Announcement("Wait for the current download to finish").post()
     }
 
     private func resumeInputFromPasteboard() {
@@ -271,9 +271,9 @@ final class LauncherViewModel {
         guard old != new else { return nil }
         switch new {
         case .downloading:
-            return "Descargando"
+            return "Downloading"
         case .completed:
-            return "Descarga completada: \(completedTitle)"
+            return "Download completed: \(completedTitle)"
         case .error:
             return "Error: \(errorMessage)"
         case .input:

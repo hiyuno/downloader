@@ -10,13 +10,13 @@ enum YTDLPError: LocalizedError, Sendable {
     var errorDescription: String? {
         switch self {
         case .binaryMissing:
-            "No se encontró el binario yt-dlp empaquetado."
+            "Couldn't find the bundled yt-dlp binary."
         case .launchFailed(let message):
-            "No se pudo iniciar yt-dlp: \(message)"
+            "Couldn't launch yt-dlp: \(message)"
         case .processFailed(let status, _):
-            "yt-dlp terminó con código \(status)."
+            "yt-dlp exited with code \(status)."
         case .outputPathUnknown:
-            "La descarga terminó pero no se pudo determinar la ruta del archivo."
+            "The download finished but the file path couldn't be determined."
         }
     }
 
@@ -153,7 +153,9 @@ actor YTDLPService {
 
     // MARK: - Privado
 
-    private static func arguments(for task: DownloadTask, quality: DownloadQuality) -> [String] {
+    /// `internal` (no `private`) para que los tests verifiquen los argumentos reales
+    /// que se le pasan a yt-dlp — p.ej. que `--ffmpeg-location` siempre esté presente.
+    static func arguments(for task: DownloadTask, quality: DownloadQuality) -> [String] {
         var arguments = [
             task.sourceURL.absoluteString,
             "-f", quality.formatArgument,

@@ -13,9 +13,9 @@ enum MenuBarIconRenderer {
     static func image(for state: State) -> NSImage {
         switch state {
         case .idle:
-            symbol("arrow.down.circle", description: "Downloader — esperando descargas")
+            symbol("arrow.down.circle", description: "Downloader — waiting for downloads")
         case .error:
-            symbol("exclamationmark.circle", description: "Downloader — error en descarga")
+            symbol("exclamationmark.circle", description: "Downloader — download error")
         case .downloading(let percent):
             progressRing(percent: percent)
         }
@@ -74,25 +74,31 @@ enum MenuBarIconRenderer {
                 context.strokePath()
             }
 
-            // Flecha de 8pt al centro.
-            let arrowHeight: CGFloat = 8
-            let arrowWidth: CGFloat = 5
-            let top = CGPoint(x: center.x, y: center.y + arrowHeight / 2)
-            let bottom = CGPoint(x: center.x, y: center.y - arrowHeight / 2)
-            context.setLineWidth(1.6)
+            // Flecha centrada en el ring, mismas proporciones y mismo lineWidth que el
+            // trazo del anillo (2pt) — antes usaba 1.6pt y no coincidía con el aro
+            // (mismo criterio de arreglo que `DownloadArrow` en ProgressRing.swift).
+            let halfHeight = radius * 0.42
+            let armSpan = radius * 0.30
+            let armDrop = radius * 0.34
+            let top = CGPoint(x: center.x, y: center.y + halfHeight)
+            let tip = CGPoint(x: center.x, y: center.y - halfHeight)
+            let leftArm = CGPoint(x: center.x - armSpan, y: tip.y + armDrop)
+            let rightArm = CGPoint(x: center.x + armSpan, y: tip.y + armDrop)
+            context.setLineWidth(lineWidth)
+            context.setLineCap(.round)
             context.setLineJoin(.round)
             context.move(to: top)
-            context.addLine(to: bottom)
+            context.addLine(to: tip)
             context.strokePath()
-            context.move(to: CGPoint(x: center.x - arrowWidth / 2, y: bottom.y + arrowWidth / 2))
-            context.addLine(to: bottom)
-            context.addLine(to: CGPoint(x: center.x + arrowWidth / 2, y: bottom.y + arrowWidth / 2))
+            context.move(to: leftArm)
+            context.addLine(to: tip)
+            context.addLine(to: rightArm)
             context.strokePath()
 
             return true
         }
         image.isTemplate = true
-        image.accessibilityDescription = "Descargando \(Int(clamped * 100)) por ciento"
+        image.accessibilityDescription = "Downloading \(Int(clamped * 100)) percent"
         return image
     }
 }

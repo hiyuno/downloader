@@ -5,15 +5,15 @@ enum Theme {
 
     enum Radius {
         static let panel: CGFloat = 24
-        static let row: CGFloat = 12          // 24 − 12 de padding del panel
-        static let siteTile: CGFloat = 4      // 12 − 8 de inset del ícono
+        static let row: CGFloat = 18          // 24 − 6 de padding del panel
+        static let siteTile: CGFloat = 10     // 18 − 8 de inset del ícono
         static let button: CGFloat = 10
         static let settingsSection: CGFloat = 16
         static let pill: CGFloat = 999
     }
 
     enum Spacing {
-        static let panelPadding: CGFloat = 12
+        static let panelPadding: CGFloat = 6
         static let inputRowHeight: CGFloat = 52
         static let inputHorizontalPadding: CGFloat = 16
         static let iconToText: CGFloat = 10
@@ -28,8 +28,8 @@ enum Theme {
     enum Size {
         static let panelWidth: CGFloat = 560
         /// Único frame, sin lista — DESIGN_LIQUID §1: solo dos alturas de panel posibles.
-        static let panelHeightBase: CGFloat = 76
-        static let panelHeightWithChip: CGFloat = 98
+        static let panelHeightBase: CGFloat = 64
+        static let panelHeightWithChip: CGFloat = 86
         static let rowIcon: CGFloat = 20
         static let siteIcon: CGFloat = 16
         static let progressRing: CGFloat = 18
@@ -45,7 +45,7 @@ enum Theme {
     }
 
     enum Font {
-        static let input = SwiftUI.Font.system(size: 20, weight: .regular, design: .rounded)
+        static let input = SwiftUI.Font.system(size: 14, weight: .regular, design: .rounded)
         static let siteBadge = SwiftUI.Font.system(size: 12, weight: .medium)
         static let rowTitle = SwiftUI.Font.system(size: 13, weight: .regular)
         static let rowSubtitle = SwiftUI.Font.system(size: 11, weight: .regular)
@@ -62,6 +62,43 @@ enum Theme {
         static let frostStroke = Color.white.opacity(0.15)
         static let separator = Color(nsColor: .separatorColor)
         static let opaquePanel = Color(nsColor: .windowBackgroundColor)
+
+        /// Tinte del fondo del frame con el color de marca del sitio detectado — solo
+        /// aplica en `.input` (DESIGN_LIQUID §Color, decisión 2026-07-27). Instagram usa
+        /// su gradiente real; el resto un color plano. Opacidad marcada (no sutil, pedido
+        /// del usuario) — sigue subiendo con Reduce Transparency para mantener el mismo
+        /// salto relativo que ya existía entre `rowFill`/`rowFillReduceTransparency`.
+        static func siteTint(for site: SupportedSite, reduceTransparency: Bool) -> AnyShapeStyle? {
+            let opacity = reduceTransparency ? 0.28 : 0.18
+            if site == .instagram {
+                return AnyShapeStyle(instagramGradient.opacity(opacity))
+            }
+            guard let base = siteBrandColor(for: site) else { return nil }
+            return AnyShapeStyle(base.opacity(opacity))
+        }
+
+        /// Gradiente oficial de marca de Instagram (5 paradas, diagonal) — DESIGN_LIQUID
+        /// §Color: se reemplazó el color plano representativo por el gradiente real.
+        private static let instagramGradient = LinearGradient(
+            colors: [
+                Color(red: 0.996, green: 0.855, blue: 0.459), // #FEDA75
+                Color(red: 0.980, green: 0.494, blue: 0.118), // #FA7E1E
+                Color(red: 0.839, green: 0.161, blue: 0.463), // #D62976
+                Color(red: 0.588, green: 0.184, blue: 0.749), // #962FBF
+                Color(red: 0.310, green: 0.357, blue: 0.835), // #4F5BD5
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+
+        private static func siteBrandColor(for site: SupportedSite) -> Color? {
+            switch site {
+            case .youtube: Color(red: 1.0, green: 0.0, blue: 0.0)            // #FF0000
+            case .tiktok: Color(red: 0.996, green: 0.173, blue: 0.333)       // #FE2C55
+            case .twitter: Color.black                                       // marca "X"
+            case .instagram, .other: nil
+            }
+        }
     }
 
     /// Todas las duraciones y curvas vienen de la tabla de Animaciones de DESIGN_LIQUID.md.

@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		06A170CDAE170B7B4C96A120 /* DownloaderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A57B68BBA4A2885AFF6FC96 /* DownloaderApp.swift */; };
 		06B154393A3C0029304A4AF6 /* YTDLPProgressParsingHostileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A099DF91DA760426484D6A62 /* YTDLPProgressParsingHostileTests.swift */; };
+		1258E2F3AD976C6010C0CDF1 /* AppIcon-source.png in Resources */ = {isa = PBXBuildFile; fileRef = B8A56D5868B2397FD3CE74AA /* AppIcon-source.png */; };
 		16E8D52894B5D594439C39DE /* YTDLPErrorMappingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000B8F7BCA3FE9FDAEE3990B /* YTDLPErrorMappingTests.swift */; };
 		17241163D57D29AC0D8BEDD1 /* LauncherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C3C28FF04B07FCC20B9C60E /* LauncherView.swift */; };
 		1B9BB06BFC3A88847F49CBD4 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 99D04D9F5E2F5A636E72978E /* Sparkle */; };
@@ -36,6 +37,7 @@
 		93961B65F65889EE6BFF6C3B /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34D26EABAA25EE456168FA7D /* Theme.swift */; };
 		985A336B5817FBEFD964B56F /* ProgressRing.swift in Sources */ = {isa = PBXBuildFile; fileRef = D80F5277B6356FAD8447E117 /* ProgressRing.swift */; };
 		A6D3E939910ADE82DA986E48 /* AppPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CFC5FDEDC126AD372AB7851 /* AppPickerView.swift */; };
+		AB31C6F7DAA693FE81C17B2B /* YTDLPArgumentsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA807F7F0D6A865FEE02C34C /* YTDLPArgumentsTests.swift */; };
 		C8770D469681A8902038750B /* LauncherPanelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5469894D546D03CD933A068 /* LauncherPanelController.swift */; };
 		D0919E2EE72F70B037353992 /* AppSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D47B6A3E3FB50B037A44FF47 /* AppSettingsTests.swift */; };
 		D3FB22AE8754D26BAB6469FD /* AppSettingsBookmarkFallbackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B0B99089FED1617DD6EA2B /* AppSettingsBookmarkFallbackTests.swift */; };
@@ -89,9 +91,11 @@
 		98B3DE5D09C349D58A469946 /* YTDLPProgressParsingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YTDLPProgressParsingTests.swift; sourceTree = "<group>"; };
 		9CFC5FDEDC126AD372AB7851 /* AppPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPickerView.swift; sourceTree = "<group>"; };
 		A099DF91DA760426484D6A62 /* YTDLPProgressParsingHostileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YTDLPProgressParsingHostileTests.swift; sourceTree = "<group>"; };
+		AA807F7F0D6A865FEE02C34C /* YTDLPArgumentsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YTDLPArgumentsTests.swift; sourceTree = "<group>"; };
 		AB72C45C044EA91D29432A3E /* YTDLPService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YTDLPService.swift; sourceTree = "<group>"; };
 		ADB5D21EEB8BE5FFDD6DF47E /* Downloader.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Downloader.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B5FE3EC0180B20BEC7546406 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		B8A56D5868B2397FD3CE74AA /* AppIcon-source.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon-source.png"; sourceTree = "<group>"; };
 		C1CDE8F3412C48ADF8294F48 /* InlineChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InlineChip.swift; sourceTree = "<group>"; };
 		CA244ACB37FE19F33F5B1AD7 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		D04661A14CF17BEEE9811C90 /* HotkeyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyService.swift; sourceTree = "<group>"; };
@@ -122,6 +126,7 @@
 		04A0F5A85979595FEBA3BFD8 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				B8A56D5868B2397FD3CE74AA /* AppIcon-source.png */,
 				5E84C2699F23DD13CF33BA73 /* Assets.xcassets */,
 			);
 			path = Resources;
@@ -258,6 +263,7 @@
 				D47B6A3E3FB50B037A44FF47 /* AppSettingsTests.swift */,
 				374C045F897A7722043FC081 /* URLValidatorHostileTests.swift */,
 				84A5B75E5E4EA54757E3E0F3 /* URLValidatorTests.swift */,
+				AA807F7F0D6A865FEE02C34C /* YTDLPArgumentsTests.swift */,
 				000B8F7BCA3FE9FDAEE3990B /* YTDLPErrorMappingTests.swift */,
 				A099DF91DA760426484D6A62 /* YTDLPProgressParsingHostileTests.swift */,
 				98B3DE5D09C349D58A469946 /* YTDLPProgressParsingTests.swift */,
@@ -352,6 +358,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1258E2F3AD976C6010C0CDF1 /* AppIcon-source.png in Resources */,
 				88F326E0C53ABAE28C8EED9D /* Assets.xcassets in Resources */,
 				78C4BA75E6CD982A2BFFB919 /* PrivacyInfo.xcprivacy in Resources */,
 			);
@@ -390,6 +397,7 @@
 				D0919E2EE72F70B037353992 /* AppSettingsTests.swift in Sources */,
 				41376A67A88160155B9CC609 /* URLValidatorHostileTests.swift in Sources */,
 				7ED874DDD8F92177153992AC /* URLValidatorTests.swift in Sources */,
+				AB31C6F7DAA693FE81C17B2B /* YTDLPArgumentsTests.swift in Sources */,
 				16E8D52894B5D594439C39DE /* YTDLPErrorMappingTests.swift in Sources */,
 				06B154393A3C0029304A4AF6 /* YTDLPProgressParsingHostileTests.swift in Sources */,
 				73BFC27D40282A13974BC329 /* YTDLPProgressParsingTests.swift in Sources */,

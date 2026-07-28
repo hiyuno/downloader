@@ -9,22 +9,40 @@ enum DownloadQuality: String, CaseIterable, Sendable, Identifiable {
     var id: String { rawValue }
 
     /// Nunca se expone esta sintaxis al usuario (TRD "Qué NO hacer").
+    ///
+    /// `[ext=mp4]` por sí solo NO garantiza un video reproducible: varios sitios
+    /// (Instagram entre ellos) publican streams VP9 dentro de un contenedor rotulado
+    /// `.mp4`, que `--merge-output-format mp4` remuxea sin volver a codificar — el
+    /// archivo resultante es un .mp4 válido que QuickTime/AVFoundation no puede
+    /// decodificar (QuickTime no soporta VP9 en ningún contenedor).
+    ///
+    /// El primer intento (`bv*[vcodec^=avc1]+ba[ext=m4a]` / `b[vcodec^=avc1]`) exige
+    /// H.264 explícito para sitios que sí reportan `vcodec` (YouTube, TikTok...).
+    /// Pero el extractor de Instagram deja `vcodec`/`acodec` en `null` para sus
+    /// streams progresivos combinados (los que en realidad SÍ son H.264+AAC) — un
+    /// filtro `[vcodec^=avc1]` los descarta por falta de metadata y cae al único
+    /// stream con metadata completa: el DASH en VP9. Por eso el segundo fallback es
+    /// `b[height<=?N]` sin filtro de códec: el orden de preferencia por defecto de
+    /// yt-dlp ya prioriza avc1 sobre vp9 cuando ambos son candidatos, así que sigue
+    /// evitando VP9 en los sitios que sí lo anuncian, y además acepta los formatos
+    /// sin metadata de codec (Instagram) en vez de rechazarlos. `?` en `height<=?N`
+    /// evita que el filtro descarte formatos sin `height` conocido.
     var formatArgument: String {
         switch self {
         case .best:
-            "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/b"
+            "bv*[vcodec^=avc1]+ba[ext=m4a]/b[vcodec^=avc1]/b/bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/b"
         case .max1080:
-            "bv*[ext=mp4][height<=1080]+ba[ext=m4a]/b[ext=mp4][height<=1080]/b[height<=1080]/b"
+            "bv*[vcodec^=avc1][height<=1080]+ba[ext=m4a]/b[vcodec^=avc1][height<=1080]/b[height<=?1080]/bv*[ext=mp4][height<=1080]+ba[ext=m4a]/b[ext=mp4][height<=1080]/b[height<=1080]/b"
         case .max720:
-            "bv*[ext=mp4][height<=720]+ba[ext=m4a]/b[ext=mp4][height<=720]/b[height<=720]/b"
+            "bv*[vcodec^=avc1][height<=720]+ba[ext=m4a]/b[vcodec^=avc1][height<=720]/b[height<=?720]/bv*[ext=mp4][height<=720]+ba[ext=m4a]/b[ext=mp4][height<=720]/b[height<=720]/b"
         }
     }
 
     var displayName: String {
         switch self {
-        case .best: "Mejor calidad"
-        case .max1080: "1080p máx"
-        case .max720: "720p máx"
+        case .best: "Best quality"
+        case .max1080: "1080p max"
+        case .max720: "720p max"
         }
     }
 }

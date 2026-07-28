@@ -37,7 +37,7 @@
 | Fondo de fila failed | `Color.red.opacity(0.08)` | única fila con tinte de color — señal de error, no decorativa |
 | Texto primario | `.primary` | título de fila, texto del campo |
 | Texto secundario | `.secondary` | subtítulo (% / velocidad / ETA / razón de error), sitio detectado |
-| Texto terciario | `.tertiary` | placeholder del campo, hints |
+| Texto terciario | `.tertiary` | hints |
 | Separadores | `Color(nsColor: .separatorColor)` | entre filas, si se usan (ver Componentes) |
 | Éxito | `Color.green` | check de completado |
 | Error | `Color.red` | icono y subtítulo de failed |
@@ -49,9 +49,25 @@
 - **Uso:** botón submit implícito (Enter), progress ring/bar, selección de texto en el campo (system default), estado activo en Settings.
 
 ### Colores custom
-Ninguno. Fuera de alcance para v1 — ver principio de identidad visual arriba.
+Ninguno de marca propia. Fuera de alcance para v1 — ver principio de identidad visual arriba. Sí existen colores de marca de *terceros* (ver tabla siguiente), que es un caso distinto: no es identidad visual de esta app, es reflejar de qué sitio viene el contenido.
 
----
+### Tinte del sitio detectado — solo en `.input`
+
+El fondo del frame (`Theme.Palette.rowFill`, normalmente `Color.primary.opacity(0.04)`) cambia de hue al color de marca del sitio en cuanto `SupportedSite.detect` reconoce la URL pegada/escrita — **únicamente mientras el frame está en `.input`**. En `.downloading`, `.completed` y `.error` el fondo vuelve a ser el neutro de siempre (`.error` además ya tiene su propio rojo, que no debe competir con un color de marca).
+
+| Sitio | Color de marca | Hex |
+|---|---|---|
+| YouTube | rojo, plano | `#FF0000` |
+| Instagram | **gradiente real de marca**, diagonal (`.topLeading → .bottomTrailing`), 5 paradas | `#FEDA75 → #FA7E1E → #D62976 → #962FBF → #4F5BD5` |
+| TikTok | rojo/rosa de acento, plano | `#FE2C55` |
+| X (Twitter) | negro (marca actual post-rebrand), plano | `#000000` |
+| Sitio no reconocido (`.other`) | sin tinte — se mantiene `Theme.Palette.rowFill` neutro | — |
+
+**Opacidad:** `0.18` normal, `0.28` con Reduce Transparency (`Theme.Palette.siteTint(for:reduceTransparency:)`) — marcada, no sutil (pedido directo del usuario, iteración sobre la versión anterior que usaba `0.04`/`0.08`, la misma magnitud que el fill neutro). Sigue siendo un tinte del fondo, no un logo ni un banner — el resto de la fila (texto, ícono) no cambia.
+
+**Por qué solo en `.input` y no persiste durante la descarga:** pedido directo del usuario, con esta razón de diseño: el tinte es información de *detección* ("reconocí este link"), no de *identidad de la descarga*. Una vez que el Enter dispara `.downloading`, lo relevante ya es el progreso, no de qué sitio vino — y mantener el tinte ahí competiría con la señal de `.error` (rojo) si la descarga falla.
+
+**Riesgo conocido, no resuelto:** el negro de X (`#000000`) sobre un fill que ya parte de un panel oscuro (`Color.primary.opacity(0.04)` en Dark Mode es blanco al 4%, no negro — pero el panel de fondo detrás sí es oscuro) puede resultar casi imperceptible en Dark Mode, que es probablemente el modo más común de uso de esta app. Queda documentado, no corregido — ver "Sin definir aún".
 
 ## Tipografía
 
@@ -63,8 +79,8 @@ Ninguno. Fuera de alcance para v1 — ver principio de identidad visual arriba.
 
 | Elemento | Tamaño / peso | Uso |
 |----------|--------------|-----|
-| Input del launcher | 20pt Regular, `.rounded` design | texto que el usuario pega o escribe |
-| Placeholder del input | 20pt Regular, `.tertiary` | "Pega un link…" |
+| Input del launcher | 14pt Regular, `.rounded` design | texto que el usuario pega o escribe |
+| Placeholder del input | 14pt Regular, `.secondary` | "Pega un link…" |
 | Sitio detectado (badge, solo nombre) | 12pt Medium | "YouTube", "TikTok", a la izquierda del input (sin ícono) |
 | Título de fila (nombre de archivo / título del video) | 13pt Regular | línea principal de `DownloadRowView` |
 | Subtítulo de fila (%, velocidad, ETA, razón de error) | 11pt Regular, `.secondary` | línea secundaria de la fila |
@@ -83,7 +99,7 @@ Ninguno. Fuera de alcance para v1 — ver principio de identidad visual arriba.
 
 | Contexto | Valor |
 |----------|-------|
-| Padding interno del panel (margen del contenido respecto al borde del glass) | 12pt |
+| Padding interno del panel (margen del contenido respecto al borde del glass) | 6pt |
 | Altura del input row (vacío) | 52pt |
 | Padding horizontal dentro del input row | 16pt |
 | Espacio entre input row y la lista de descargas | 8pt |
@@ -106,15 +122,15 @@ Ninguno. Fuera de alcance para v1 — ver principio de identidad visual arriba.
 
 | Elemento | r_outer | Padding del contenedor | r_inner resultante | Nota |
 |----------|---------|------------------------|---------------------|------|
-| Panel launcher (glass completo) | 24pt | 12pt | — | forma raíz, no anidada |
-| Input row / cada `DownloadRowView` (hijos directos del panel) | — | — | **12pt** = 24 − 12 | conciliado con el padding del panel |
-| Ícono/badge de sitio dentro de una fila | — | 8pt (inset del ícono respecto al borde de la fila) | **4pt** = 12 − 8 | tile pequeño, casi cuadrado — intencional |
+| Panel launcher (glass completo) | 24pt | 6pt | — | forma raíz, no anidada |
+| Frame único (`.input`/`.downloading`/`.completed`/`.error`, hijo directo del panel) | — | — | **18pt** = 24 − 6 | conciliado con el padding del panel |
+| Ícono/badge de sitio (si se reintroduce un tile) | — | 8pt (inset del ícono respecto al borde del frame) | **10pt** = 18 − 8 | valor de reserva — hoy el nombre del sitio es texto plano, sin tile |
 | Chip "sitio no reconocido" | 999pt (pill) | — | — | pill, no participa del anidado |
 | Progress bar (track y fill) | 999pt (pill) | — | — | pill en ambas capas |
 | Botón submit implícito / botones de Settings | 10pt | — | — | independiente, no vive anidado en otro contenedor redondeado |
 | Ventana de Settings, contenedor de sección | 16pt | 12pt | **4pt** = 16 − 12 | controles internos son nativos (`Form`), no compiten por radio propio |
 
-**Por qué 24/12/12 y no el default 20/16/8 de otras apps:** un panel de ~90–420pt de alto con filas de 48pt no tiene espacio para un padding de 16pt sin que las filas se vean apretadas contra el borde. 12pt de padding + 24pt de radio exterior da un r_inner de 12pt — suficientemente redondeado para que el input y las filas no se vean como rectángulos duros, sin robar ancho útil al contenido.
+**Por qué 24/6/18 y no el default 20/16/8 de otras apps:** el panel del launcher es una superficie mucho más chica que una pantalla de contenido — el margen entre el borde del glass y el frame interior se redujo a la mitad (de 12pt a 6pt) por pedido directo, para que el frame ocupe más del ancho disponible y el aro de glass visible alrededor sea más discreto. 6pt de padding + 24pt de radio exterior da un r_inner de 18pt — el frame se ve más redondeado que antes (18pt vs. 12pt), lo cual es coherente: menos padding alrededor de una forma con el mismo radio exterior siempre sube el r_inner.
 
 ---
 
@@ -168,13 +184,13 @@ struct GlassPanelBackground: ViewModifier {
 
 | Estado del panel | Alto |
 |---|---|
-| Frame en `.input`, `.downloading`, `.completed` o `.error` (sin chip) | 76pt (12 padding + 52 frame + 12 padding) |
-| Frame en `.input` con chip de advertencia visible | 76pt + 22pt = 98pt (el chip solo puede aparecer en `.input` — no hay detección de sitio corriendo en los otros 3 estados) |
+| Frame en `.input`, `.downloading`, `.completed` o `.error` (sin chip) | 64pt (6 padding + 52 frame + 6 padding) |
+| Frame en `.input` con chip de advertencia visible | 64pt + 22pt = 86pt (el chip solo puede aparecer en `.input` — no hay detección de sitio corriendo en los otros 3 estados) |
 
-El ancho **nunca** cambia. El alto ahora tiene solo dos valores posibles en toda la app (76pt / 98pt) en vez de una escala continua hasta 420pt — la lista, el `ScrollView` interno y el techo `panelMaxHeight` quedan retirados junto con `DownloadRowView` como componente de lista (ver Decisiones registradas).
+El ancho **nunca** cambia. El alto ahora tiene solo dos valores posibles en toda la app (64pt / 86pt) en vez de una escala continua hasta 420pt — la lista, el `ScrollView` interno y el techo `panelMaxHeight` quedan retirados junto con `DownloadRowView` como componente de lista (ver Decisiones registradas).
 
 **Layout vertical (de arriba hacia abajo):**
-1. El frame (52pt) — su contenido interno cambia por completo según el estado (ver sección 2), pero su altura, radio (`r=12`, nested de `r_outer=24 − padding=12`) y fill base nunca cambian entre estados.
+1. El frame (52pt) — su contenido interno cambia por completo según el estado (ver sección 2), pero su altura, radio (`r=18`, nested de `r_outer=24 − padding=6`) y fill base nunca cambian entre estados.
 2. Chip de advertencia (solo si sitio no reconocido, solo en `.input`) — 22pt, aparece/desaparece con el input, no empuja layout con salto brusco (ver Animaciones).
 
 **Estado "recién abierto" (foco inmediato):**
@@ -194,9 +210,25 @@ El ancho **nunca** cambia. El alto ahora tiene solo dos valores posibles en toda
 **`DownloadRowView` y el concepto de lista de filas quedan retirados.** Ya no existen filas independientes por descarga ni una lista de "descargas activas" visible — solo hay **una descarga a la vez**, y su estado se muestra transformando la superficie del input mismo. Ver Decisiones registradas para el porqué y qué reemplaza a `DownloadRowView`.
 
 **Layout base — el frame nunca cambia de tamaño ni de radio entre estados, solo su contenido:**
-`52pt alto · padding horizontal 16pt · r=12pt (nested de r_outer=24, padding=12) · fill Color.primary.opacity(0.04) (Color.red.opacity(0.08) solo en `.error`)`
+`52pt alto · padding horizontal 16pt · r=18pt (nested de r_outer=24, padding=6) · fill Color.primary.opacity(0.04) (Color.red.opacity(0.08) solo en `.error`)`
 
 El frame ocupa exactamente el espacio que el input row siempre ocupó — la transición entre estados es un crossfade de contenido dentro de una caja que no se mueve ni redimensiona (misma filosofía que ya aplicaba a `DownloadRowView`: "el layout no cambia de tamaño entre estados, por eso la transición es crossfade puro sin desplazamiento").
+
+**Ícono izquierdo del frame = anillo de progreso, mismo lenguaje visual que la menu bar (decisión 2026-07-27, ver Decisiones registradas):**
+
+En `.downloading`/`.completed`/`.error` el ícono izquierdo (20×20pt) deja de ser un SF Symbol estático distinto por estado y pasa a ser `DownloadStateIcon` — el mismo objeto compuesto en los 3 estados: una flecha centrada dentro de un `ProgressRing` que se llena de 0 a 100%. La flecha es un `Path` propio (`DownloadArrow`), no un SF Symbol — ver "Decisiones registradas" 2026-07-27. Es el "hermano a color" del ícono monocromo de `MenuBarIconRenderer` (mismo concepto: flecha + arco de progreso, 12 en punto, sentido horario). Con esto, **hay un único indicador de progreso visible en el frame** — el `ProgressRing` que antes vivía al lado del texto "NN%" (lado derecho) queda retirado; el lado derecho de `.downloading` conserva solo el texto del porcentaje.
+
+| Estado | Color (glifo + anillo) | Track del anillo | `percent` del anillo |
+|---|---|---|---|
+| `.downloading` (con título real) | Blanco | `Color.white.opacity(0.15)` | `currentDownload` en vivo |
+| `.downloading` ("Preparando…", sin título aún / `.queued`) | Blanco | `Color.white.opacity(0.15)` | `0` — anillo vacío, sin animación de indeterminado; el `%` de la derecha tampoco aparece hasta que hay progreso real (ver coreografía del accesorio derecho) |
+| `.completed` | Verde | `Color.green.opacity(0.15)` | `1` — anillo completo |
+| `.error` | Rojo | `Color.red.opacity(0.15)` | `0` — anillo vacío (no hay un `%` significativo que congelar al fallar; el color rojo + el fill rojo del frame ya comunican el estado) |
+
+- **El ícono nunca se desplaza** — sigue cambiando "en su lugar" exactamente como antes. El color (y, entre `.downloading`→`.completed`/`.error`, también el `percent` del anillo) crossfadea vía el mismo mecanismo ya existente: `statefulLeading` usa `.id(viewModel.frameState)` + `.transition(.opacity)`, así que el swap de estado es un crossfade de opacity — sin animar el color del glifo por separado, sin números mágicos nuevos, mismo token `Theme.Motion.rowStateCrossfade` (`.easeOut`, 200ms) que ya crossfadeaba ícono+título.
+- **Dentro de `.downloading`** (sin cambio de `frameState`, solo el `%` avanzando) el anillo sí anima su propio llenado con `Theme.Motion.progressTick` (`.linear`, 200ms por tick) — igual que el ring que antes vivía a la derecha.
+- **Reduce Motion:** el llenado del anillo (`ProgressRing`) se mantiene animado siempre — es un valor de datos, no decoración, así que no se desactiva bajo Reduce Motion (única excepción a la regla general de esta app de "Reduce Motion apaga animaciones espaciales"). El cambio de color entre estados sí puede saltar instantáneo bajo Reduce Motion porque va montado sobre el mismo crossfade de opacity de `statefulLeading`, que ya colapsa a un fade puro sin traslación en ese modo.
+- **VoiceOver:** `DownloadStateIcon` hereda `accessibilityHidden(true)` de `ProgressRing` y además se marca `accessibilityHidden(true)` a nivel de todo el ícono compuesto — el label combinado del frame (`statefulLeading.accessibilityLabel`) ya anuncia estado y `%`, así que el ícono no genera un segundo nodo redundante.
 
 #### Estado `.input` (base)
 
@@ -204,13 +236,13 @@ Sin cambios respecto al input row actual: badge de sitio (12pt Medium, `.seconda
 
 #### Estado `.downloading`
 
-`[ícono 20×20pt, arrow.down.circle, Color.accentColor] [8pt] [título 13pt Regular, .primary, 1 línea, truncationMode .middle, centrado verticalmente] [Spacer] [trailing: "NN%" 11pt .white monospacedDigit + ProgressRing 18pt, spacing 4pt]`
+`[ícono 20×20pt, DownloadStateIcon (flecha + anillo de progreso, blanco)] [8pt] [título 13pt Regular, .primary, 1 línea, truncationMode .middle, centrado verticalmente] [Spacer] [trailing: "NN%" 11pt .white monospacedDigit]`
 
 | Elemento | Valor |
 |---|---|
 | Título | `task.title` si ya llegó del parser de yt-dlp; si no, **"Preparando…"** en `.secondary` (mismo peso 13pt, distinto color mientras no hay título real — señal sutil de "esto todavía no es el título final") |
-| Ícono | Aparece por primera vez respecto a `.input` (que no tiene ícono desde la decisión de 2026-07-27) — es la señal visual primaria de "ya no estás escribiendo, esto es de solo lectura" |
-| % + ring | Idéntico al tratamiento que tenía `DownloadRowView.downloading`: ring `Circle().trim()`, track `Color.white.opacity(0.15)` 2pt, arco `Color.white` 2pt `lineCap: .round`, arranca a las 12 en punto, sentido horario; `%` con `monospacedDigit()` para evitar jitter |
+| Ícono | Aparece por primera vez respecto a `.input` (que no tiene ícono desde la decisión de 2026-07-27) — es la señal visual primaria de "ya no estás escribiendo, esto es de solo lectura". **Es el propio indicador de progreso** (ver "Ícono izquierdo del frame = anillo de progreso" abajo), no un símbolo estático — su anillo se llena de 0 a 100% mientras dura la descarga |
+| % (trailing) | Ya no lleva ring propio — el anillo vive en el ícono izquierdo. Solo el texto `"NN%"`, `.white`, `monospacedDigit()` para evitar jitter |
 | Fill del frame | Igual que `.input` — `Color.primary.opacity(0.04)`, sin cambio, para que la transición sea puramente de contenido |
 
 **Una descarga a la vez — qué pasa si se intenta pegar/escribir/Enter mientras `.downloading`:**
@@ -222,7 +254,9 @@ Sin cambios respecto al input row actual: badge de sitio (12pt Medium, `.seconda
 
 #### Estado `.completed`
 
-`[ícono 20×20pt, checkmark.circle.fill, .green] [8pt] [título 13pt Regular, .primary, 1 línea, centrado verticalmente] [Spacer] [trailing: hasta 2 botones de acción]`
+`[ícono 20×20pt, DownloadStateIcon (flecha + anillo completo, verde)] [8pt] [título 13pt Regular, .primary, 1 línea, centrado verticalmente] [Spacer] [trailing: hasta 2 botones de acción]`
+
+**El ícono ya no cambia a un checkmark** (iteración de diseño del usuario, 2026-07-27, ver "Decisiones registradas") — es el mismo objeto flecha+anillo de `.downloading`, solo cambia de color (blanco → verde) y su anillo queda al 100%.
 
 - Título: nombre de archivo final (mismo que `DownloadRowView.completed` mostraba).
 - **Trailing accessory — dos botones, mismo diseño que tenía `DownloadRowView.completed`, con un cambio de visibilidad (ver más abajo):**
@@ -240,7 +274,9 @@ Sin cambios respecto al input row actual: badge de sitio (12pt Medium, `.seconda
 
 #### Estado `.error`
 
-`[ícono 20×20pt, exclamationmark.triangle.fill, .red] [8pt] [texto de razón 13pt Regular, .red, 1 línea, centrado verticalmente] [Spacer, sin trailing accessory]`
+`[ícono 20×20pt, DownloadStateIcon (flecha + anillo vacío, rojo)] [8pt] [texto de razón 13pt Regular, .red, 1 línea, centrado verticalmente] [Spacer, sin trailing accessory]`
+
+**El ícono ya no cambia a `exclamationmark.triangle.fill`** — mismo objeto flecha+anillo que `.downloading`/`.completed`, en rojo; el anillo se muestra vacío (no hay un `%` significativo que congelar al fallar, y el estado ya se comunica con el color rojo + el fill rojo del frame).
 
 - Fill del frame: `Color.red.opacity(0.08)` — único estado con tinte de color, señal de error, no decorativo (mismo tratamiento que tenía `.failed` en `DownloadRowView`).
 - Texto: el mensaje legible de la tabla de `DownloadFailureReason` de abajo — nunca el enum crudo ni stderr de yt-dlp sin traducir. Si el título del video llegó a obtenerse antes de fallar, antecede al mensaje: "Nombre del video — mensaje de error"; si no, solo el mensaje.
@@ -320,9 +356,9 @@ Todos los íconos son **template images** (monocromáticos, se re-tintan solos c
 **Ya no hay lista.** Esta sección documentaba `DownloadRowView` como componente de lista (`VStack` de filas, sin separadores, sin swipe actions). Desde el rediseño de 2026-07-27 (ver sección "Pantallas y componentes" → "El frame") no existe una lista de descargas activas — hay un único frame que muestra el estado de la única descarga en curso. No hay nada que listar, ordenar ni scrollear.
 
 ### Iconografía
-- SF Symbols exclusivamente.
+- SF Symbols exclusivamente, excepto el ícono izquierdo del frame en `.downloading`/`.completed`/`.error` (`DownloadStateIcon`), que compone una flecha dibujada a mano como `Path` (`DownloadArrow`, no SF Symbol — ver "Decisiones registradas" 2026-07-27) con un anillo de progreso dibujado a mano (`ProgressRing`) — mismo lenguaje visual que `MenuBarIconRenderer`, ver sección "Ícono izquierdo del frame = anillo de progreso" arriba.
 - Peso: `.regular` en filas y menu bar; `.medium` en el chip de advertencia para que destaque ligeramente más que el texto secundario adyacente.
-- Estilo: outline por defecto (`arrow.down.circle`, `clock`, `exclamationmark.triangle`); `.fill` solo para el estado positivo de éxito (`checkmark.circle.fill`) — el único momento donde vale la pena un glyph más "sólido" y afirmativo.
+- Estilo: outline por defecto (`clock`, `folder`, etc.); no hay más glyphs `.fill` en el frame — el ícono de estado izquierdo ya no cambia de símbolo entre `.downloading`/`.completed`/`.error`, solo de color, así que la distinción "afirmativo = glyph sólido" del sistema anterior queda retirada para ese ícono en particular.
 
 ---
 
@@ -337,14 +373,14 @@ Todos los íconos son **template images** (monocromáticos, se re-tintan solos c
 | **Cambio de alto del panel** (aparece/desaparece el chip de advertencia — única causa restante desde el rediseño de frame único) | Reactivo a estado | Animar el alto del contenedor, `.spring(response: 0.35, dampingFraction: 1.0)` — sin bounce | ~280ms de asentamiento | Es reposicionamiento de contenido, no un gesto — tabla de Apple: "Move/reposition → damping 1.0, response 0.4"; se usa 0.35 por ser una superficie pequeña |
 | **Transición entre estados del frame** (`.input` → `.downloading` → `.completed`/`.error` → `.input`) | Cambio de estado del frame | Crossfade de ícono + texto + trailing accessory (opacity, sin mover posición), `.easeOut` | **200ms** | Ocasional por descarga, no repetitivo — amerita motion completo, pero sin desplazamiento porque el frame **nunca** cambia de tamaño entre sus 4 estados (regla nueva del rediseño: el frame mide 52pt siempre) |
 | **Shake de rechazo** (se pega/escribe/Enter mientras el frame está en `.downloading`) | Intento de input durante descarga activa | Traslación horizontal ±4pt, 3 ciclos, `.easeInOut` | **160ms** | Feedback de acción rechazada, no motion decorativo de entrada/salida — mismo lenguaje que el shake de contraseña incorrecta de macOS; no está sujeto a la prohibición de bounce/overshoot de esta tabla porque no es un gesto con momentum, es un acuse de recibo de "no" |
-| **Progreso del ring dentro de `.downloading`** | Cada tick de `--progress-template` (~1/seg) | Animar el arco del `ProgressRing` hacia el nuevo `percent`, `.linear` | **200ms** por tick | Es un valor de datos entrando, no un gesto — un tween lineal corto entre el valor viejo y el nuevo evita el salto brusco de un `%` a otro sin fingir un progreso continuo que no existe |
+| **Progreso del ring dentro de `.downloading`** (ahora en el ícono izquierdo del frame, `DownloadStateIcon`) | Cada tick de `--progress-template` (~1/seg) | Animar el arco del `ProgressRing` hacia el nuevo `percent`, `.linear` | **200ms** por tick | Es un valor de datos entrando, no un gesto — un tween lineal corto entre el valor viejo y el nuevo evita el salto brusco de un `%` a otro sin fingir un progreso continuo que no existe. Se anima siempre, incluso bajo Reduce Motion (ver tabla de Reduce Motion) |
 | **Ring de progreso del menu bar** | Cada redraw permitido (throttle de la sección Menu bar) | Sin animación explícita — es un redraw directo del valor actual | — | Redibujar un `NSImage` estático no es interpolable de forma barata; el throttle (≥2pp o 400ms) ya evita que se vea como un salto — animarlo encima sería gastar CPU en un lugar que el usuario mira de reojo, no de frente |
 | **Cambio de ícono de menu bar entre estados** (idle↔downloading↔error) | Cambio de estado agregado de las descargas | Crossfade corto del `NSImage` vía `CALayer` transition | **150ms** | Evita el parpadeo de un swap instantáneo de imagen, sin ser perceptible como "animación" — dura menos que un parpadeo consciente |
 | **Chip "sitio no reconocido" aparece/desaparece** | Detección de sitio en cada cambio del input, solo en `.input` | Opacity + height juntos, mismo spring que el cambio de alto del panel | ~280ms | Es parte de la misma familia de "el contenido cambia de alto" — consistencia de motion en todo el panel, un solo tipo de curva para todo lo que crece/encoge |
 | **Accesorio derecho del frame — entrada** (llega el primer progreso real, `percent` pasa de 0 a >0) | Progreso real entrante en `.downloading` | `[% + ring]` desliza desde el borde trailing del frame + fade (`.move(edge: .trailing).combined(with: .opacity)`) | `.easeOut`, **220ms** (`Theme.Motion.accessorySlideDuration`) | Antes el % y el ring aparecían desde el primer instante, incluso mostrando "0%" junto a "Preparando…" — información sin sentido (0% de un progreso que ni empezó a reportarse). Ocultarlos hasta que hay un dato real y hacerlos entrar con un slide marca ese momento como un evento distinto de "empezó la descarga", no como parte del estado inicial |
 | **Accesorio derecho del frame — salida** (`.downloading` → `.completed` o `.downloading` → `.error`) | Fin de la descarga | `[% + ring]` desliza hacia el borde trailing + fade, mismo par move+opacity que la entrada | `.easeOut`, **220ms** | Simetría con la entrada — el bloque se va por donde vino |
 | **Accesorio derecho del frame — íconos de acción entran** (solo tras completar, nunca en error) | El slide de salida del `[% + ring]` **terminó** (no el cambio de estado en sí) | Los 2 botones de acción entran deslizando desde el trailing + fade | `.easeOut`, **220ms**, arrancando solo al `completion` del slide de salida — **encadenamiento secuencial estricto, sin solape** | Pedido explícito del usuario: el bloque de progreso no puede cruzarse visualmente con los botones de acción — deben leerse como dos eventos distintos, no como un intercambio simultáneo. Se implementa con `withAnimation(_:completion:)` (macOS 14+) en vez de un `DispatchQueue.asyncAfter` con la duración como número mágico: el `completion` está atado a la animación que realmente corrió, no a una estimación de cuánto debería tardar |
-| **Ícono izquierdo del frame** (`arrow.down.circle` → `checkmark.circle.fill` / `exclamationmark.triangle.fill`) | Cambio de estado del frame | Crossfade puro en su lugar (opacity, sin desplazamiento) — desacoplado del accesorio derecho, corre en paralelo sin esperar su coreografía | `.easeOut`, **200ms** (mismo `rowStateCrossfade` de siempre) | El ícono nunca se mueve — solo el bloque derecho tiene motion espacial. Vive fuera de la coreografía secuencial del accesorio derecho porque son dos regiones visuales distintas del frame, no un solo bloque atómico |
+| **Ícono izquierdo del frame** (`DownloadStateIcon`: mismo objeto flecha+anillo, cambia de color blanco → verde/rojo entre `.downloading` y `.completed`/`.error`) | Cambio de estado del frame | Crossfade puro en su lugar (opacity, sin desplazamiento) — desacoplado del accesorio derecho, corre en paralelo sin esperar su coreografía | `.easeOut`, **200ms** (mismo `rowStateCrossfade` de siempre) | El ícono nunca se mueve — solo el bloque derecho tiene motion espacial. Vive fuera de la coreografía secuencial del accesorio derecho porque son dos regiones visuales distintas del frame, no un solo bloque atómico. El color ya no se anima por separado — va montado sobre el mismo crossfade de opacity del ícono+título (`.id(frameState)`), no hay una animación de color independiente que inventar |
 
 **Reglas explícitas heredadas de las skills de motion (Emil / Apple) aplicadas aquí:**
 - Nunca se usa `ease-in`/`.easeIn` para algo que **entra** — la única excepción documentada arriba es el cierre del panel, que **sale**, no entra.
@@ -363,7 +399,7 @@ Todos los íconos son **template images** (monocromáticos, se re-tintan solos c
 | Spring de alto del panel (chip de advertencia) | Cross-fade de opacity únicamente, sin animar el alto (el alto salta directo al valor final) |
 | Crossfade de estado del frame | Se mantiene — es opacity pura, no movimiento, no causa mareo |
 | **Shake de rechazo (input durante `.downloading`)** | **Se reemplaza** por un pulso de opacity del frame (1 → 0.6 → 1, 150ms, `.easeInOut`) — sin traslación espacial. La traslación repetida es exactamente el tipo de motion que Reduce Motion existe para evitar; el pulso de opacity comunica "rechazado" sin movimiento |
-| Progreso del ring (`.linear`) | Se mantiene — es un arco llenándose, no un desplazamiento espacial |
+| Progreso del ring (`.linear`, ahora en el ícono izquierdo) | Se mantiene siempre animado, sin excepción — es un arco llenándose (dato), no un desplazamiento espacial. Única animación de esta app que **no** se desactiva ni se sustituye bajo Reduce Motion |
 | Crossfade de ícono de menu bar | Se mantiene, misma duración — swap de imagen estática, no movimiento |
 | **Accesorio derecho del frame — entrada/salida del `[% + ring]` y de los íconos de acción** | Se sustituye el slide (`.move(edge: .trailing)`) por un fade puro (`.opacity`), misma duración (220ms) y **el mismo orden secuencial estricto** (salida del progreso → entrada de los íconos de acción, sin solape) — solo cambia la geometría de la transición, no el encadenamiento |
 
@@ -427,28 +463,34 @@ El frame es **un único elemento de accesibilidad combinado** (`.accessibilityEl
 | 2026-07-27 | Botones de acción de `.completed` (app destino + Finder) pasan de hover-only a siempre-visibles | Corrección de accesibilidad real, no solo preferencia visual: hover-only los hacía inalcanzables por teclado/VoiceOver (nunca disparan `onHover`). Al ser ahora el único frame del panel (no una fila más entre varias), mostrarlos siempre no compite por atención con nada más — y los hace navegables por Tab |
 | 2026-07-27 | Al reabrir el panel: `.completed`/`.error` **no sobreviven**, siempre vuelve a `.input` — excepto si hay una descarga real en curso, que vuelve a `.downloading` con su progreso actual | Resuelve el ítem "Sin definir aún" heredado sobre persistencia de filas completadas. `.completed`/`.error` son confirmaciones pensadas para verse una vez, inmediatamente después del evento; si el usuario ya cerró el panel, se asume que las vio. Pero una descarga que sigue corriendo en background no debe "desaparecer" visualmente solo porque se cerró y reabrió el panel |
 | 2026-07-27 | Coreografía de slide del accesorio derecho del frame (entra al iniciar progreso, sale al completar, secuencial estricto con los íconos de acción) | Iteración de diseño del usuario — antes el % y el ring se mostraban desde el primer instante de `.downloading` (incluso junto a "Preparando…" con 0%, sin sentido); ahora aparecen solo cuando hay un dato real, y al completar salen del cuadro antes de que entren los íconos de abrir/revelar, para que ambos bloques nunca se vean cruzándose. El contenedor derecho reserva un ancho fijo (`Theme.Size.rowTrailingAccessoryWidth`, 66pt) en los 3 estados no-`.input` para que el título nunca salte al aparecer/ocultarse el contenido |
+| 2026-07-27 | Padding interno del panel reducido a la mitad: 12pt → 6pt (`Theme.Spacing.panelPadding`) | Pedido directo del usuario — el aro de glass visible alrededor del frame se sentía demasiado ancho. Cascada obligatoria por la regla `r_inner = r_outer − padding`: el radio del frame sube de 12pt a **18pt** (`Theme.Radius.row`, sigue siendo 24 − 6), y las dos alturas fijas del panel bajan de 76/98pt a **64/86pt** (`Theme.Size.panelHeightBase` / `panelHeightWithChip`). El radio de reserva del tile de ícono de sitio (hoy sin uso, ver sección 2) se actualiza en paralelo a 10pt (18 − 8) para no quedar inconsistente si se reintroduce |
+| 2026-07-27 | Tipografía del input (texto y placeholder) baja de 20pt a **14pt** (`Theme.Font.input`) | Pedido directo del usuario. Se mantiene `.rounded` design y peso Regular — solo cambia el tamaño. No se tocó `Theme.Spacing.inputRowHeight` (sigue en 52pt): a 14pt el texto queda con más aire vertical dentro del frame en vez de sentirse apretado, que es el lado seguro si el criterio cambia después |
+| 2026-07-27 | Placeholder del input sube de `.tertiaryLabelColor` a `.secondaryLabelColor` (`URLInputField.placeholderString`) | Pedido directo del usuario — más contraste/visibilidad contra el glass. Se probó blanco literal (`NSColor.white`) primero, pero se revirtió: era ilegible en Light Mode por no ser semántico. `.secondaryLabelColor` sí se adapta solo (≈ blanco 55% en Dark Mode, gris oscuro en Light Mode) — más visible que `.tertiary` en ambos modos, sin el riesgo de un color fijo. Sigue distinto de `.labelColor` (texto real escrito), así que la distinción placeholder/contenido no se pierde |
+| 2026-07-27 | Fondo del frame se tiñe con el color de marca del sitio detectado, solo en `.input` (`Theme.Palette.siteTint`) | Pedido directo del usuario. Decisiones tomadas junto con el usuario: (1) solo en `.input`, no persiste en `.downloading`/`.completed`/`.error` — es señal de detección, no de identidad de la descarga; (2) intensidad sutil, misma opacidad (0.04 / 0.08 con Reduce Transparency) que el fill neutro que reemplaza, solo cambia el hue; (3) Instagram usa un solo color representativo (`#E1306C`) en vez del gradiente real de su logo, consistente con que los demás sitios también usan un tono sólido; (4) X usa negro (`#000000`, marca post-rebrand) en vez del azul histórico de Twitter — con el riesgo conocido de que sea casi invisible en Dark Mode, documentado en "Sin definir aún" |
+| 2026-07-27 | Tinte del sitio: Instagram pasa de color plano representativo al **gradiente real de marca** (5 paradas), y la opacidad sube de 0.04/0.08 a **0.18/0.28** para todos los sitios | Pedido directo del usuario — el tinte anterior se sentía demasiado sutil, casi imperceptible. `frameFill` cambió de tipo `Color` a `AnyShapeStyle` (`LauncherView.swift`) para poder devolver indistintamente un color plano o un `LinearGradient` desde la misma propiedad computada — es la forma correcta en SwiftUI de unificar dos `ShapeStyle` concretos distintos sin duplicar la vista. El riesgo de X en Dark Mode (ver entrada anterior) mejora con la opacidad más alta pero no se resuelve del todo — sigue en "Sin definir aún" |
+| 2026-07-27 | Ícono de app reemplazado por arte aportado por el usuario (squircle morado con flecha 3D) | Iteración de diseño del usuario |
+| 2026-07-27 | Ícono izquierdo del frame = anillo de progreso estilo menu bar, con color por estado (blanco/verde/rojo); el anillo derecho se retira y queda solo el % | Iteración de diseño del usuario — antes el ícono izquierdo era un SF Symbol distinto por estado (`arrow.down.circle`/`checkmark.circle.fill`/`exclamationmark.triangle.fill`, azul/verde/rojo) y el progreso vivía en un `ProgressRing` separado junto al `%` a la derecha, duplicando el concepto visual de "anillo" en dos lugares del mismo frame. Ahora hay un único anillo de progreso, en el mismo objeto que ya ocupaba el espacio del ícono izquierdo, replicando el lenguaje visual de `MenuBarIconRenderer` (flecha + anillo) — el frame se lee como el "hermano a color" de la menu bar. `ProgressRing.swift` se generaliza (gana un parámetro `diameter`) y gana un nuevo componente, `DownloadStateIcon`, que compone la flecha (`arrow.down`) sobre el ring; ninguno de los dos queda sin uso |
+| 2026-07-27 | Flecha del ícono de estado dibujada como Path con el mismo lineWidth del anillo | El peso del SF Symbol no coincidía con el trazo del aro — reporte del usuario. `DownloadStateIcon` sustituye `Image(systemName: "arrow.down")` por `DownloadArrow`, un `Shape` propio (asta + punta en "V") trazado con `StrokeStyle(lineWidth: Theme.Size.progressRingLineWidth, lineCap: .round, lineJoin: .round)` — el mismo token que usa `ProgressRing`, así el grosor es idéntico por construcción. Geometría proporcional al radio del `rect` (`halfHeight = radius × 0.42`, `armSpan = radius × 0.30`, `armDrop = radius × 0.34`), no hardcodeada para 20pt, así el componente sigue funcionando a cualquier diámetro. `MenuBarIconRenderer.progressRing(percent:)` tenía el mismo defecto (flecha a 1.6pt contra un anillo de 2pt) y se corrigió con la misma fórmula y el mismo `lineWidth` que el ring, para mantener los dos íconos coherentes |
 
 ---
 
 ## Ícono de app
 
-**Concepto:** flecha hacia una bandeja — el glifo universal de "descargar" (el mismo lenguaje que el ícono de descargas de cualquier navegador), sin texto ni logotipo. Coherente con la identidad de la app ("instantánea, silenciosa, utilitaria"): el ícono comunica la única acción que la app hace, nada más.
+**REEMPLAZADO 2026-07-27 — arte aportado por el usuario, ya no generado programáticamente.** La sección anterior describía un ícono dibujado por script (`CoreGraphics`/`AppKit`, squircle azul→cian con flecha+bandeja) que queda obsoleto. El ícono actual es arte final entregado por el usuario: `Downloader/Resources/AppIcon-source.png` (1024×1024, RGBA, Display P3, canvas transparente con el squircle ya recortado). Es la fuente de verdad — no hay script generador que reconstruya el arte, solo el paso de composición/escalado descrito abajo.
 
-**Geometría (canvas 1024×1024, grid de ícono macOS Big Sur+):**
-- Squircle de fondo: superelipse (aproximación de continuous corner, exponente 5), ocupa el 82.4% del canvas (≈844×844pt), centrado — sigue el grid oficial de Apple para íconos de macOS, no un cuadrado con esquinas circulares.
-- Glifo centrado dentro del squircle, escalado al 72% del squircle (≈607pt): tallo vertical rematado en semicírculo + cabeza triangular con la punta redondeada (radio 9pt en un sistema lógico de 100pt) + una bandeja en forma de cápsula debajo, separada por un espacio — no es solo una flecha suelta, la bandeja ancla visualmente el gesto de "aterrizar/guardar".
-- Sombra suave debajo del glifo (offset y blur proporcionales al canvas) para separarlo del fondo sin verse pegado.
+**Concepto:** squircle morado con degradado y una flecha de descarga en 3D con acabado brillante/cromado (sin bandeja, sin texto, sin logotipo) — sigue comunicando la misma acción única que el ícono anterior ("descargar"), pero con un tratamiento visual más ilustrativo/dimensional en vez de flat.
 
-**Colores exactos:**
-- Gradiente de fondo, diagonal (esquina superior-izquierda → inferior-derecha): `#3B82F6` (azul, arriba) → `#0891B2` (cian, abajo) — paleta "stream/red", distinta del `Color.accentColor` neutro que usa el resto de la app (el ícono es la única superficie de la app con identidad de color propia; ver Color > Colores custom, que sigue en "ninguno" para la UI interna).
-- Glifo (flecha + bandeja): blanco `#FFFFFF` al 96% de opacidad.
-- Gloss superior: radial blanco al 22% de opacidad desvaneciendo a 0%, centrado en el tercio superior del squircle — separación especular sutil, no un brillo iOS plano.
-- Sombra interior inferior: gradiente negro de 0% a 16% de opacidad en el tercio inferior — ancla el squircle ópticamente, evita que se vea flotando sin peso.
-- Sombra del glifo: negro al 35% de opacidad, blur y offset proporcionales al canvas.
+**Colores dominantes (del arte fuente, muestreados):** degradado de fondo diagonal de azul-violeta (`~#3B82F6`–`#5B4FE0` en la esquina superior) a púrpura profundo (`~#3D1A78`–`#241050` hacia el borde inferior/exterior), con el centro del squircle más claro/saturado (halo violeta alrededor de la flecha) que los bordes, que oscurecen hacia las esquinas. La flecha es acabado cromado/glass — blanco y gris-azulado con reflejos especulares y sombra propia, no un blanco plano — lo que le da el look "3D brillante" que pidió el usuario, distinto del blanco flat al 96% del ícono anterior.
 
-**Por qué esta paleta y no gris/monocromo como el ícono de menu bar:** el ícono de menu bar es template (monocromo, se re-tinta con el sistema) porque vive dentro del chrome de macOS y debe mimetizarse — regla ya registrada en "Menu bar". El ícono de app vive en Dock/Finder/App Switcher, junto a íconos de otras apps con colores propios; ahí sí necesita una identidad de color reconocible a simple vista, aunque la UI interna de la app deliberadamente no tenga una.
+**Regla de proporción aplicada — reescalado centrado, no 1:1:** el arte fuente llena el lienzo de borde a borde en el eje horizontal/vertical medio (el squircle toca los 4 bordes a la altura y ancho medios del canvas 1024×1024 — no deja el margen de aire que Apple especifica para íconos de macOS). Se verificó con un análisis de canal alfa (`Pillow`/`numpy`): a `y=512` y `x=512` el alfa es >200 desde el píxel 0 hasta el 1023 en ambos ejes — el squircle ocupa el 100% del ancho/alto en su punto más ancho, contra el ~80% que especifica Apple. Sin corrección, el ícono se vería notablemente más grande que sus vecinos en el Dock.
 
-**Generación:** script Swift (`CoreGraphics`/`AppKit`, sin dependencias) que dibuja la superelipse y el glifo como `CGPath` vectoriales y rasteriza cada tamaño requerido directamente a su resolución final (no downscaling de un solo master), para AA nítido en 16pt tanto como en 1024pt. Archivos en `Downloader/Resources/Assets.xcassets/AppIcon.appiconset/`.
+Se aplicó la regla oficial de Apple para macOS Big Sur+: **el arte ocupa 824×824pt dentro de un lienzo de 1024×1024pt (80.47%)**, centrado. El arte fuente (1024×1024 con el squircle ya recortado) se reescala completo — squircle, degradado, flecha y sombra, sin recortar ni redibujar nada — a 824×824 y se centra sobre un canvas transparente de 1024×1024 antes de generar cada tamaño final. Este 80.47% es el valor oficial de Apple, ligeramente más conservador que el 82.4% que usaba el ícono generado anteriormente (que era una aproximación propia, no la cifra exacta de Apple) — se prefirió el valor oficial ahora que hay arte real de producción en juego.
+
+**Generación:** script Python (`Pillow`, `Downloader/Resources/AppIcon-source.png` como único input) que, para cada uno de los 10 slots del `AppIcon.appiconset`, reescala el master 1024×1024 **directamente** al tamaño de arte final de ese slot (`canvas × 0.8047`, redondeado) con remuestreo LANCZOS — sin cadena de downscalings intermedios — y lo pega centrado sobre un canvas transparente del tamaño de canvas final (16, 32, 64, 128, 256, 512, 1024). Mismo principio que el generador anterior (rasterizar cada tamaño a su resolución final, no derivar unos de otros) pero partiendo de arte de trama en vez de `CGPath` vectoriales, porque ahora la fuente es una imagen, no geometría paramétrica.
+
+**Por qué esta paleta y no gris/monocromo como el ícono de menu bar:** sin cambios respecto a la razón ya registrada — el ícono de menu bar es template (monocromo, se re-tinta con el sistema) porque vive dentro del chrome de macOS; el ícono de app vive en Dock/Finder/App Switcher junto a íconos de otras apps con colores propios y sí necesita identidad de color reconocible a simple vista.
+
+**Coherencia con el menu bar:** el glifo del menu bar (`arrow.down.circle` en idle, flecha simple dibujada a mano dentro del ring en `.downloading`, ver sección "Menu bar" arriba) ya es una flecha hacia abajo sin bandeja — la misma familia visual que la flecha del ícono nuevo (que tampoco tiene bandeja, a diferencia del ícono anterior). No se requirió ningún cambio en `MenuBarIconRenderer.swift`: el glifo ya es coherente con el concepto nuevo, y sigue siendo obligatoriamente monocromo/template por la razón de HIG ya documentada — no se reemplaza por una versión a color del ícono de app.
 
 ---
 
@@ -459,3 +501,4 @@ El frame es **un único elemento de accesibilidad combinado** (`.accessibilityEl
 - [ ] Estado de "verificando yt-dlp" al iniciar la app (`YTDLPUpdateService`) — si debe reflejarse en algún lado de la UI o es completamente silencioso
 - [ ] Qué pasa si el usuario intenta cerrar el panel (Escape) mientras el frame está en `.downloading` y luego lo reabre desde el menu bar en vez de la hotkey — el comportamiento especificado (vuelve a `.downloading` con progreso) asume el mismo flujo de apertura sin diferenciar la fuente; no debería importar, pero no fue verificado contra el AppDelegate
 - [ ] Copy exacto del `AccessibilityNotification.Announcement` en inglés para VoiceOver internacional (esta pasada solo definió el copy en español, consistente con el resto de la UI, pero no revisó si el sistema debe localizar los anuncios además de las labels)
+- [ ] Tinte de X (`#000000`) puede ser casi imperceptible en Dark Mode contra el panel oscuro — evaluar si necesita un tratamiento distinto (ej. blanco/gris claro) o si se acepta que sea el tinte más sutil de los cuatro

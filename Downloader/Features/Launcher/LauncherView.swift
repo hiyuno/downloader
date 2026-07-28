@@ -7,7 +7,7 @@ struct LauncherView: View {
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     /// Coreografía del accesorio derecho (DESIGN_LIQUID §Animaciones): estos dos flags
-    /// controlan la presencia del % + ring y de los botones de acción de forma
+    /// controlan la presencia del texto "NN%" y de los botones de acción de forma
     /// independiente del crossfade de ícono/título — permite que la salida del uno y
     /// la entrada del otro queden encadenadas en vez de solaparse (ver `advanceToCompletedActions`).
     @State private var showsProgressAccessory = false
@@ -199,9 +199,14 @@ struct LauncherView: View {
         .animation(Theme.Motion.rowStateCrossfade, value: viewModel.frameState)
     }
 
-    private var frameFill: Color {
-        if viewModel.frameState == .error { return Theme.Palette.failedRowFill }
-        return reduceTransparency ? Theme.Palette.rowFillReduceTransparency : Theme.Palette.rowFill
+    private var frameFill: AnyShapeStyle {
+        if viewModel.frameState == .error { return AnyShapeStyle(Theme.Palette.failedRowFill) }
+        if viewModel.frameState == .input,
+           let site = viewModel.detectedSite,
+           let tint = Theme.Palette.siteTint(for: site, reduceTransparency: reduceTransparency) {
+            return tint
+        }
+        return AnyShapeStyle(reduceTransparency ? Theme.Palette.rowFillReduceTransparency : Theme.Palette.rowFill)
     }
 
     // MARK: - `.input`
@@ -249,28 +254,28 @@ struct LauncherView: View {
             switch viewModel.frameState {
             case .downloading:
                 HStack(spacing: Theme.Spacing.iconToText) {
-                    stateIcon(systemName: "arrow.down.circle", color: Color.accentColor)
+                    DownloadStateIcon(percent: viewModel.downloadingPercent, color: .white)
                     stateTitle(viewModel.downloadingTitle, color: viewModel.downloadingTitleIsPlaceholder ? .secondary : .primary)
                 }
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel("\(viewModel.downloadingTitle). Descargando, \(Int(viewModel.downloadingPercent * 100)) por ciento.")
+                .accessibilityLabel("\(viewModel.downloadingTitle). Downloading, \(Int(viewModel.downloadingPercent * 100)) percent.")
 
             case .completed:
                 HStack(spacing: Theme.Spacing.iconToText) {
-                    stateIcon(systemName: "checkmark.circle.fill", color: .green)
+                    DownloadStateIcon(percent: 1, color: .green)
                     stateTitle(viewModel.completedTitle, color: .primary)
                 }
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel("\(viewModel.completedTitle). Completado.")
+                .accessibilityLabel("\(viewModel.completedTitle). Completed.")
 
             case .error:
                 HStack(spacing: Theme.Spacing.iconToText) {
-                    stateIcon(systemName: "exclamationmark.triangle.fill", color: .red)
+                    DownloadStateIcon(percent: 0, color: .red)
                     stateTitle(viewModel.errorMessage, color: .red)
                 }
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel("Falló: \(viewModel.errorMessage).")
-                .accessibilityHint("Escribe o pega un nuevo link para continuar")
+                .accessibilityLabel("Failed: \(viewModel.errorMessage).")
+                .accessibilityHint("Type or paste a new link to continue")
 
             case .input:
                 EmptyView()
@@ -278,12 +283,6 @@ struct LauncherView: View {
         }
         .id(viewModel.frameState)
         .transition(.opacity)
-    }
-
-    private func stateIcon(systemName: String, color: Color) -> some View {
-        Image(systemName: systemName)
-            .foregroundStyle(color)
-            .frame(width: Theme.Size.rowIcon, height: Theme.Size.rowIcon)
     }
 
     private func stateTitle(_ text: String, color: Color) -> some View {
@@ -295,7 +294,7 @@ struct LauncherView: View {
     }
 
     /// Ancho reservado fijo (`Theme.Size.rowTrailingAccessoryWidth`) para que el título
-    /// nunca salte de tamaño cuando el % + ring o los botones aparecen/desaparecen —
+    /// nunca salte de tamaño cuando el texto "NN%" o los botones aparecen/desaparecen —
     /// el espacio siempre está ahí, solo cambia si hay algo dibujado dentro.
     @ViewBuilder
     private var trailingAccessorySlot: some View {
@@ -310,7 +309,7 @@ struct LauncherView: View {
             }
         }
         .frame(width: Theme.Size.rowTrailingAccessoryWidth, height: Theme.Size.rowIcon, alignment: .trailing)
-        // Cuando el accesorio es el % + ring (o está vacío), toda la información
+        // Cuando el accesorio es el texto "NN%" (o está vacío), toda la información
         // relevante ya está en el label combinado de `statefulLeading` — este slot no
         // debe generar un segundo elemento de VoiceOver redundante. Solo en `.completed`
         // los botones deben quedar navegables de forma independiente (Tab / VO).
@@ -318,14 +317,10 @@ struct LauncherView: View {
     }
 
     private var progressAccessory: some View {
-        HStack(spacing: 4) {
-            Text("\(Int(viewModel.downloadingPercent * 100))%")
-                .scaledFont(size: 11, weight: .regular)
-                .foregroundStyle(.white)
-                .monospacedDigit()
-
-            ProgressRing(percent: viewModel.downloadingPercent)
-        }
+        Text("\(Int(viewModel.downloadingPercent * 100))%")
+            .scaledFont(size: 11, weight: .regular)
+            .foregroundStyle(.white)
+            .monospacedDigit()
     }
 
     @ViewBuilder
@@ -343,7 +338,7 @@ struct LauncherView: View {
                     .buttonStyle(.plain)
                     .frame(width: Theme.Spacing.minimumTapTarget, height: Theme.Spacing.minimumTapTarget)
                     .contentShape(Rectangle())
-                    .accessibilityLabel("Abrir \(viewModel.completedTitle) en \(destinationAppName ?? "app destino")")
+                    .accessibilityLabel("Open \(viewModel.completedTitle) in \(destinationAppName ?? "destination app")")
                 }
 
                 Button {
@@ -356,7 +351,7 @@ struct LauncherView: View {
                 .foregroundStyle(.secondary)
                 .frame(width: Theme.Spacing.minimumTapTarget, height: Theme.Spacing.minimumTapTarget)
                 .contentShape(Rectangle())
-                .accessibilityLabel("Mostrar \(viewModel.completedTitle) en Finder")
+                .accessibilityLabel("Show \(viewModel.completedTitle) in Finder")
             }
         }
     }

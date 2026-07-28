@@ -35,8 +35,8 @@ struct URLInputField: NSViewRepresentable {
         field.textColor = .labelColor
         field.placeholderAttributedString = placeholderString(placeholder)
         field.stringValue = text
-        field.setAccessibilityLabel("Ingresa URL de video")
-        field.setAccessibilityHelp("Presiona Enter para descargar, Escape para cerrar")
+        field.setAccessibilityLabel("Enter video URL")
+        field.setAccessibilityHelp("Press Enter to download, Escape to close")
         return field
     }
 
@@ -78,7 +78,7 @@ struct URLInputField: NSViewRepresentable {
             string: value,
             attributes: [
                 .font: inputFont,
-                .foregroundColor: NSColor.tertiaryLabelColor,
+                .foregroundColor: NSColor.secondaryLabelColor,
             ]
         )
     }

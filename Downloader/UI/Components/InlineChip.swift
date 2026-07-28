@@ -41,7 +41,7 @@ struct InlineChip: View {
 
     private var accessibilityValueText: String {
         switch kind {
-        case .warning: "Aviso"
+        case .warning: "Warning"
         case .error: "Error"
         }
     }
@@ -52,12 +52,12 @@ struct InlineChip: View {
         InlineChip(
             kind: .warning,
             symbolName: "questionmark.circle",
-            text: "Sitio no reconocido — se intentará de todas formas"
+            text: "Site not recognized — will try anyway"
         )
         InlineChip(
             kind: .error,
             symbolName: "exclamationmark.triangle",
-            text: "Falta yt-dlp en Resources/bin"
+            text: "yt-dlp missing from Resources/bin"
         )
     }
     .padding(40)

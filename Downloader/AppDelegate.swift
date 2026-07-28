@@ -59,31 +59,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency SPUSta
     private func setUpStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         statusItem.button?.image = MenuBarIconRenderer.image(for: .idle)
-        statusItem.button?.toolTip = "Downloader — clic para abrir el launcher (⌥⌘Space)"
+        statusItem.button?.toolTip = "Downloader — click to open the launcher (⌥⌘Space)"
         statusItem.menu = buildMenu()
     }
 
     private func buildMenu() -> NSMenu {
         let menu = NSMenu()
         menu.addItem(
-            withTitle: "Abrir Downloader",
+            withTitle: "Open Downloader",
             action: #selector(openLauncher),
             keyEquivalent: ""
         ).target = self
         menu.addItem(
-            withTitle: "Ajustes…",
+            withTitle: "Settings…",
             action: #selector(openSettings),
             keyEquivalent: ","
         ).target = self
         menu.addItem(.separator())
         menu.addItem(
-            withTitle: "Buscar actualizaciones…",
-            action: #selector(checkForUpdates),
-            keyEquivalent: ""
-        ).target = self
-        menu.addItem(.separator())
-        menu.addItem(
-            withTitle: "Salir",
+            withTitle: "Quit",
             action: #selector(NSApplication.terminate(_:)),
             keyEquivalent: "q"
         )
@@ -172,10 +166,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency SPUSta
     @objc private func openSettings() {
         Logger.settings.notice("menu item \"Ajustes…\" clickeado")
         SettingsWindowController.shared.openSettings()
-    }
-
-    @objc private func checkForUpdates() {
-        updaterController.checkForUpdates(nil)
     }
 
     // MARK: - Sparkle (SPUStandardUserDriverDelegate)

@@ -8,7 +8,7 @@ enum HotkeyError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .registrationFailed:
-            "No se pudo registrar el atajo — probablemente ya está tomado por otra app."
+            "Couldn't register the shortcut — it's probably already taken by another app."
         }
     }
 }
@@ -97,7 +97,7 @@ final class HotkeyService {
         case kVK_Escape: "esc"
         case kVK_ANSI_D: "D"
         case kVK_ANSI_V: "V"
-        default: "Tecla \(keyCode)"
+        default: "Key \(keyCode)"
         }
     }
 }

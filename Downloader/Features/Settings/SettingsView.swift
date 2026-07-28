@@ -27,24 +27,24 @@ struct SettingsView: View {
                         .resizable()
                         .frame(width: Theme.Size.siteIcon, height: Theme.Size.siteIcon)
                 }
-                Text(viewModel.destinationAppName ?? "Ninguna — solo se notificará al terminar")
+                Text(viewModel.destinationAppName ?? "None — you'll just be notified when it's done")
                     .scaledFont(size: 13, weight: .regular)
                     .foregroundStyle(viewModel.destinationAppName == nil ? .secondary : .primary)
                 Spacer()
                 if viewModel.destinationAppName != nil {
-                    Button("Quitar", action: viewModel.clearDestinationApp)
+                    Button("Remove", action: viewModel.clearDestinationApp)
                         .buttonStyle(DownloaderButtonStyle())
-                        .accessibilityLabel("Quitar app destino")
+                        .accessibilityLabel("Remove destination app")
                 }
-                Button("Cambiar…", action: viewModel.changeDestinationApp)
+                Button("Change…", action: viewModel.changeDestinationApp)
                     .buttonStyle(DownloaderButtonStyle())
-                    .accessibilityLabel("Cambiar app destino")
+                    .accessibilityLabel("Change destination app")
             }
-            Text("El archivo se abrirá automáticamente aquí al completar la descarga.")
+            Text("The file will open here automatically once the download finishes.")
                 .scaledFont(size: 11, weight: .regular)
                 .foregroundStyle(.secondary)
         } header: {
-            Text("App destino").scaledFont(size: 13, weight: .semibold)
+            Text("Destination App").scaledFont(size: 13, weight: .semibold)
         }
     }
 
@@ -62,9 +62,9 @@ struct SettingsView: View {
                     .lineLimit(1)
                     .truncationMode(.middle)
                 Spacer()
-                Button("Cambiar…", action: viewModel.changeDownloadFolder)
+                Button("Change…", action: viewModel.changeDownloadFolder)
                     .buttonStyle(DownloaderButtonStyle())
-                    .accessibilityLabel("Cambiar carpeta de descarga")
+                    .accessibilityLabel("Change download folder")
             }
             if let folderError = viewModel.folderError {
                 HStack(spacing: 4) {
@@ -76,7 +76,7 @@ struct SettingsView: View {
                 .foregroundStyle(.red)
             }
         } header: {
-            Text("Carpeta de descarga").scaledFont(size: 13, weight: .semibold)
+            Text("Download Folder").scaledFont(size: 13, weight: .semibold)
         }
     }
 
@@ -91,13 +91,13 @@ struct SettingsView: View {
             }
             .pickerStyle(.segmented)
             .labelsHidden()
-            .accessibilityLabel("Calidad de descarga")
+            .accessibilityLabel("Download quality")
 
-            Text("Se usa siempre — no se pregunta en cada descarga.")
+            Text("Always used — you won't be asked on every download.")
                 .scaledFont(size: 11, weight: .regular)
                 .foregroundStyle(.secondary)
         } header: {
-            Text("Calidad default").scaledFont(size: 13, weight: .semibold)
+            Text("Default Quality").scaledFont(size: 13, weight: .semibold)
         }
     }
 
@@ -106,16 +106,16 @@ struct SettingsView: View {
     private var statusSection: some View {
         Section {
             if viewModel.binariesMissing {
-                Text("Falta yt-dlp en el bundle. Coloca los binarios en Resources/bin y recompila (ver Resources/bin/README.md).")
+                Text("yt-dlp is missing from the bundle. Place the binaries in Resources/bin and rebuild (see Resources/bin/README.md).")
                     .scaledFont(size: 11, weight: .regular)
                     .foregroundStyle(.red)
             } else if updateService.updateAvailable {
-                Text("Hay una actualización de yt-dlp disponible (\(updateService.latestVersion ?? "—")). La versión empaquetada es \(updateService.embeddedVersion ?? "—").")
+                Text("A yt-dlp update is available (\(updateService.latestVersion ?? "—")). The bundled version is \(updateService.embeddedVersion ?? "—").")
                     .scaledFont(size: 11, weight: .regular)
                     .foregroundStyle(.secondary)
             }
         } header: {
-            Text("Motor de descarga").scaledFont(size: 13, weight: .semibold)
+            Text("Download Engine").scaledFont(size: 13, weight: .semibold)
         }
     }
 }

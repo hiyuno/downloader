@@ -11,8 +11,8 @@ enum AppPicker {
         panel.canChooseDirectories = false
         panel.canChooseFiles = true
         panel.allowsMultipleSelection = false
-        panel.prompt = "Elegir"
-        panel.message = "Elige la app donde se abrirá el video al terminar."
+        panel.prompt = "Choose"
+        panel.message = "Choose the app the video will open in when it's done."
 
         guard panel.runModal() == .OK, let url = panel.url else { return nil }
         return Bundle(url: url)?.bundleIdentifier
@@ -24,8 +24,8 @@ enum AppPicker {
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         panel.allowsMultipleSelection = false
-        panel.prompt = "Elegir"
-        panel.message = "Elige la carpeta donde se guardarán los videos."
+        panel.prompt = "Choose"
+        panel.message = "Choose the folder where videos will be saved."
 
         guard panel.runModal() == .OK else { return nil }
         return panel.url

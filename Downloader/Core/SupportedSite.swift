@@ -22,7 +22,7 @@ enum SupportedSite: String, CaseIterable, Sendable {
         case .instagram: "Instagram"
         case .tiktok: "TikTok"
         case .twitter: "X"
-        case .other: "Sitio no reconocido"
+        case .other: "Unrecognized site"
         }
     }
 

@@ -20,7 +20,7 @@ final class NotificationService: NSObject {
         guard await ensureAuthorization() else { return }
 
         let content = UNMutableNotificationContent()
-        content.title = "Descarga completada"
+        content.title = "Download completed"
         content.body = fileURL.lastPathComponent
         content.sound = .default
         content.userInfo = [Self.filePathKey: fileURL.path]

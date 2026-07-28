@@ -30,12 +30,12 @@ enum DownloadFailureReason: Sendable, Equatable {
     /// Nunca se muestra el enum crudo ni el stderr de yt-dlp sin traducir (DESIGN_LIQUID §2).
     var message: String {
         switch self {
-        case .unsupportedSite: "Este sitio no es compatible"
-        case .networkError: "Sin conexión — reintenta"
-        case .siteBlockedOrChanged: "El sitio cambió o bloqueó la descarga — no es un error de la app"
-        case .invalidURL: "El link no es válido"
-        case .cancelled: "Cancelado"
-        case .toolingUnavailable: "Falta el motor de descarga — revisa Resources/bin"
+        case .unsupportedSite: "This site isn't supported"
+        case .networkError: "No connection — try again"
+        case .siteBlockedOrChanged: "The site changed or blocked the download — not an app error"
+        case .invalidURL: "That link isn't valid"
+        case .cancelled: "Cancelled"
+        case .toolingUnavailable: "Download engine missing — check Resources/bin"
         }
     }
 }

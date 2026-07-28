@@ -7,7 +7,22 @@ y este proyecto usa [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-(sin cambios todavía)
+### Fixed
+
+- **Instagram videos now play correctly.** Some Instagram downloads were
+  saved in a codec (VP9) that QuickTime and Finder can't preview or play.
+  Downloader now picks Instagram's progressive H.264 streams instead, so
+  every downloaded video opens and plays normally.
+
+### Changed
+
+- **New app icon.** A fresh squircle icon with a 3D arrow, in every required
+  size.
+- **Redesigned progress indicator.** The arrow icon on the left of the
+  download panel now sits inside a ring that fills in as the download
+  progresses — white while downloading, green when it finishes, red if it
+  fails. The separate progress ring on the right side was removed, leaving
+  just the percentage.
 
 ## [1.1.1] - 2026-07-28
 

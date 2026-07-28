@@ -25,11 +25,11 @@ struct DownloadTask: Identifiable, Sendable, Equatable {
     }
 
     /// Título del frame: el nombre del archivo final si ya completó, el título real
-    /// del video si yt-dlp ya lo imprimió, y "Preparando…" mientras no hay ninguno
+    /// del video si yt-dlp ya lo imprimió, y "Preparing…" mientras no hay ninguno
     /// de los dos (DESIGN_LIQUID §2, estado `.downloading`).
     var displayTitle: String {
         if case .completed(let fileURL) = state { return fileURL.lastPathComponent }
         if let title, !title.isEmpty { return title }
-        return "Preparando…"
+        return "Preparing…"
     }
 }
