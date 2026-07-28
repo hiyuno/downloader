@@ -7,6 +7,10 @@ y este proyecto usa [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+(sin cambios todavía)
+
+## [1.2.1] - 2026-07-28
+
 ### Added
 
 - **Check for Updates.** You can now check for new versions of Downloader
