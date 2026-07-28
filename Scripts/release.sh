@@ -501,6 +501,25 @@ APPCAST_LOCAL="${UPDATES_CLONE}/${APPCAST_FILE}"
 PUB_DATE="$(LC_ALL=C date -u "+%a, %d %b %Y %H:%M:%S +0000")"
 ENCLOSURE_URL="https://github.com/${UPDATES_REPO_SLUG}/releases/download/v${VERSION}/${DMG_NAME}"
 
+# Extrae la sección [Unreleased] cruda en Markdown (sin convertir a HTML) —
+# la misma fuente que alimenta el appcast, pero tal cual está escrita en el
+# CHANGELOG. GitHub renderiza Markdown nativamente en el cuerpo del release,
+# así que no hace falta pasar por el conversor HTML de más abajo.
+RELEASE_NOTES_MD="$(python3 - "${CHANGELOG}" <<'PY'
+import re, sys
+
+with open(sys.argv[1], encoding="utf-8") as f:
+    content = f.read()
+
+m = re.search(r"## \[Unreleased\]\s*(.*?)(?=\n## \[|\Z)", content, re.S)
+body = m.group(1).strip() if m else ""
+print(body if body else "Ver CHANGELOG.md en el repo principal para el detalle de esta versión.")
+PY
+)"
+
+RELEASE_NOTES_MD_FILE="${WORK_DIR}/release_notes.md"
+printf '%s\n' "${RELEASE_NOTES_MD}" > "${RELEASE_NOTES_MD_FILE}"
+
 # Release notes: sección [Unreleased] del CHANGELOG local, como HTML simple en CDATA.
 RELEASE_NOTES_HTML="$(python3 - "${CHANGELOG}" <<'PY'
 import re, sys, html
@@ -621,7 +640,7 @@ echo "  - sha256 del DMG local (antes de subir): ${DMG_SHA_LOCAL}"
 gh release create "v${VERSION}" "${DMG_PATH}" \
   --repo "${UPDATES_REPO_SLUG}" \
   --title "Downloader ${VERSION}" \
-  --notes "Ver CHANGELOG.md en el repo principal para el detalle de esta versión." \
+  --notes-file "${RELEASE_NOTES_MD_FILE}" \
   || abort "gh release create falló"
 
 RELEASE_CREATED=1
