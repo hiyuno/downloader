@@ -10,6 +10,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency SPUSta
     private var statusItem: NSStatusItem!
     private var updaterController: SPUStandardUpdaterController!
 
+    /// Expuesto para `SettingsView` (botón "Check for Updates…" y `CheckForUpdatesViewModel`,
+    /// que necesita el `SPUUpdater` real para observar `canCheckForUpdates` vía KVO).
+    var updater: SPUUpdater { updaterController.updater }
+
     private var iconState: MenuBarIconRenderer.State = .idle
     private var lastRenderedState: MenuBarIconRenderer.State = .idle
     private var lastRenderDate = Date.distantPast
@@ -29,6 +33,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency SPUSta
 
         setUpStatusItem()
         setUpHotkey()
+        configureMainMenu()
 
         panelController.viewModel.onAggregateStateChange = { [weak self] state in
             self?.updateIcon(to: state)
@@ -76,12 +81,70 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency SPUSta
             keyEquivalent: ","
         ).target = self
         menu.addItem(.separator())
+        menu.addItem(makeCheckForUpdatesMenuItem())
+        menu.addItem(.separator())
         menu.addItem(
             withTitle: "Quit",
             action: #selector(NSApplication.terminate(_:)),
             keyEquivalent: "q"
         )
         return menu
+    }
+
+    /// `SPUStandardUpdaterController.checkForUpdates(_:)` es un `IBAction` pensado
+    /// exactamente para esto: cuando el target/action de un `NSMenuItem` apuntan a él,
+    /// Sparkle además habilita/deshabilita el ítem solo, vía `SPUUpdater.canCheckForUpdates`
+    /// (ver `SPUStandardUpdaterController.h`) — no hace falta lógica de validación propia
+    /// para los menús (a diferencia del botón de Settings, que sí la necesita — ver
+    /// `CheckForUpdatesViewModel`).
+    private func makeCheckForUpdatesMenuItem() -> NSMenuItem {
+        let item = NSMenuItem(
+            title: "Check for Updates…",
+            action: #selector(SPUStandardUpdaterController.checkForUpdates(_:)),
+            keyEquivalent: ""
+        )
+        item.target = updaterController
+        return item
+    }
+
+    // MARK: - Main menu
+
+    /// Esta app no define un `MainMenu.xib` ni usa `.commands` en `DownloaderApp` (ver su
+    /// comentario) — el menú "Downloader" (About/Settings…/Services/Hide/Quit) es el que
+    /// AppKit/SwiftUI generan por defecto para cualquier `App` sin personalizar. Ya existe
+    /// para cuando esto corre — no hay que construirlo desde cero, solo insertar el nuevo
+    /// ítem preservando todo lo demás. Convención estándar de Mac: justo debajo de "About",
+    /// separado de él y de "Settings…" por separadores.
+    private func configureMainMenu() {
+        guard let appMenu = NSApp.mainMenu?.items.first?.submenu else {
+            Logger.settings.error("configureMainMenu: no se encontró el menú principal de la app")
+            return
+        }
+
+        guard !appMenu.items.contains(where: {
+            $0.action == #selector(SPUStandardUpdaterController.checkForUpdates(_:))
+        }) else {
+            return
+        }
+
+        guard let aboutIndex = appMenu.items.firstIndex(where: {
+            $0.action == #selector(NSApplication.orderFrontStandardAboutPanel(_:))
+        }) else {
+            Logger.settings.error("configureMainMenu: no se encontró el ítem \"About\"")
+            return
+        }
+
+        appMenu.insertItem(.separator(), at: aboutIndex + 1)
+        appMenu.insertItem(makeCheckForUpdatesMenuItem(), at: aboutIndex + 2)
+
+        if CommandLine.arguments.contains("--open-settings") {
+            let dump = appMenu.items.enumerated().map { index, item in
+                item.isSeparatorItem
+                    ? "\(index): ---"
+                    : "\(index): \"\(item.title)\" key=\(item.keyEquivalent) action=\(item.action.map(String.init(describing:)) ?? "nil")"
+            }.joined(separator: " | ")
+            Logger.settings.notice("configureMainMenu dump: \(dump, privacy: .public)")
+        }
     }
 
     /// Throttle: redibuja solo si el % cambió ≥2pp, si cambió el estado, o cada 400ms.

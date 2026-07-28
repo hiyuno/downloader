@@ -7,7 +7,12 @@ y este proyecto usa [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-(sin cambios todavía)
+### Added
+
+- **Check for Updates.** You can now check for new versions of Downloader
+  directly from the app's main menu, and from a new section in Settings that
+  shows the currently installed version alongside a button to check for
+  updates.
 
 ## [1.2.0] - 2026-07-28
 

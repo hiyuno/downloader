@@ -50,6 +50,7 @@
 		E9FAE15BD464D16709914DCA /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07D44497DF4505450F8D75E1 /* NotificationService.swift */; };
 		F015C9AEC59BCCA1F3AE2E17 /* MenuBarIconRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6226884B355C04D0823274C8 /* MenuBarIconRenderer.swift */; };
 		F351FFEA45967B7E4BF5F8F5 /* FileOpenerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450E53ED85DC12C37F60C2EA /* FileOpenerService.swift */; };
+		F41073E67C96BF79093C81A7 /* CheckForUpdatesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 230487FBA66692E6D372CF7D /* CheckForUpdatesViewModel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -68,6 +69,7 @@
 		07D44497DF4505450F8D75E1 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		1B2F6C4EF0A0FB6D19FB9D52 /* URLInputField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLInputField.swift; sourceTree = "<group>"; };
 		1F0A5BBC21C7F4D72140958E /* DownloadState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadState.swift; sourceTree = "<group>"; };
+		230487FBA66692E6D372CF7D /* CheckForUpdatesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckForUpdatesViewModel.swift; sourceTree = "<group>"; };
 		317E5ECA056ADF3F23753174 /* Downloader.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Downloader.entitlements; sourceTree = "<group>"; };
 		34D26EABAA25EE456168FA7D /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		374C045F897A7722043FC081 /* URLValidatorHostileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLValidatorHostileTests.swift; sourceTree = "<group>"; };
@@ -240,6 +242,7 @@
 			isa = PBXGroup;
 			children = (
 				9CFC5FDEDC126AD372AB7851 /* AppPickerView.swift */,
+				230487FBA66692E6D372CF7D /* CheckForUpdatesViewModel.swift */,
 				B5FE3EC0180B20BEC7546406 /* SettingsView.swift */,
 				4F05A6E1852C1A0F39849AE8 /* SettingsViewModel.swift */,
 				5EF3A11F87120B94C36C5D36 /* SettingsWindowController.swift */,
@@ -412,6 +415,7 @@
 				A6D3E939910ADE82DA986E48 /* AppPickerView.swift in Sources */,
 				D61CDFFE6C22FF6A9D9C7CAF /* AppSettings.swift in Sources */,
 				38718D692EBB351903F81018 /* BundledBinaries.swift in Sources */,
+				F41073E67C96BF79093C81A7 /* CheckForUpdatesViewModel.swift in Sources */,
 				5E1488E39201B3322951DCBC /* ClipboardService.swift in Sources */,
 				24F4CD0393B2AB3012B54597 /* DownloadProgress.swift in Sources */,
 				6741A26BF09D7B44E5C8AC76 /* DownloadState.swift in Sources */,

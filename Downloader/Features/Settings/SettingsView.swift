@@ -1,8 +1,22 @@
+import AppKit
+import Sparkle
 import SwiftUI
 
 struct SettingsView: View {
     @State private var viewModel = SettingsViewModel()
     @State private var updateService = YTDLPUpdateService.shared
+    @StateObject private var checkForUpdatesViewModel: CheckForUpdatesViewModel
+
+    init() {
+        let updater = (NSApp.delegate as? AppDelegate)?.updater
+        _checkForUpdatesViewModel = StateObject(
+            wrappedValue: CheckForUpdatesViewModel(updater: updater ?? SPUStandardUpdaterController(
+                startingUpdater: false,
+                updaterDelegate: nil,
+                userDriverDelegate: nil
+            ).updater)
+        )
+    }
 
     var body: some View {
         Form {
@@ -12,6 +26,7 @@ struct SettingsView: View {
             if viewModel.binariesMissing || updateService.updateAvailable {
                 statusSection
             }
+            aboutSection
         }
         .formStyle(.grouped)
         .frame(width: Theme.Size.settings.width, height: Theme.Size.settings.height)
@@ -117,6 +132,34 @@ struct SettingsView: View {
         } header: {
             Text("Download Engine").scaledFont(size: 13, weight: .semibold)
         }
+    }
+
+    // MARK: - 4. About / Updates
+
+    private var aboutSection: some View {
+        Section {
+            HStack {
+                Text(appVersionString)
+                    .scaledFont(size: 13, weight: .regular)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button("Check for Updates…") {
+                    (NSApp.delegate as? AppDelegate)?.updater.checkForUpdates()
+                }
+                .buttonStyle(DownloaderButtonStyle())
+                .disabled(!checkForUpdatesViewModel.canCheckForUpdates)
+                .accessibilityLabel("Check for updates")
+            }
+        } header: {
+            Text("About").scaledFont(size: 13, weight: .semibold)
+        }
+    }
+
+    private var appVersionString: String {
+        let bundle = Bundle.main
+        let shortVersion = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
+        let buildNumber = bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—"
+        return "Downloader \(shortVersion) (\(buildNumber))"
     }
 }
 

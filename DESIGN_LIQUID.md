@@ -320,6 +320,13 @@ Sin cambios respecto al input row actual: badge de sitio (12pt Medium, `.seconda
    - `Picker` estilo segmentado (`.pickerStyle(.segmented)`) con 3 opciones legibles: **Mejor calidad** / **1080p máx** / **720p máx** — nunca se expone la sintaxis de formato de yt-dlp (TRD, sección "Qué NO hacer")
    - Footnote 11pt: "Se usa siempre — no se pregunta en cada descarga."
 
+4. **About / Updates** (agregada 2026-07-28, ver Decisiones registradas)
+   - Última sección del `Form`, después de "Calidad default" (y después de la sección condicional "Download Engine" si está visible).
+   - Fila única: texto de versión legible a la izquierda (`"Downloader \(CFBundleShortVersionString) (\(CFBundleVersion))"`, leído del bundle en runtime — nunca hardcodeado) en 13pt `.secondary`, mismo estilo que el resto de texto de valor de las otras secciones + botón "Check for Updates…" a la derecha, mismo `DownloaderButtonStyle` pill de 28pt que "Cambiar…"/"Remove".
+   - El botón se deshabilita (`disabled`) mientras Sparkle no puede iniciar una comprobación (`SPUUpdater.canCheckForUpdates == false`, típicamente porque ya hay una en curso) — nunca queda siempre habilitado. Se observa vía un pequeño `ObservableObject` (`CheckForUpdatesViewModel`) que puentea el KVO de `canCheckForUpdates` a Combine, patrón documentado por Sparkle para SwiftUI.
+   - Misma acción que el ítem de menú del status item y del menú principal de la app: `SPUUpdater.checkForUpdates()` del `SPUStandardUpdaterController` ya existente en `AppDelegate` — no una segunda instancia del updater.
+   - Header de sección: "About", mismo estilo 13pt Semibold que el resto.
+
 **Nota para Woz:** el atajo de teclado global (hotkey) tiene claves de `AppSettings` ya definidas en el TRD pero **no tiene UI diseñada en esta pasada** — queda en "Sin definir aún" al final de este documento. No inventar una cuarta sección sin que Jonny la diseñe.
 
 ---
@@ -471,6 +478,7 @@ El frame es **un único elemento de accesibilidad combinado** (`.accessibilityEl
 | 2026-07-27 | Ícono de app reemplazado por arte aportado por el usuario (squircle morado con flecha 3D) | Iteración de diseño del usuario |
 | 2026-07-27 | Ícono izquierdo del frame = anillo de progreso estilo menu bar, con color por estado (blanco/verde/rojo); el anillo derecho se retira y queda solo el % | Iteración de diseño del usuario — antes el ícono izquierdo era un SF Symbol distinto por estado (`arrow.down.circle`/`checkmark.circle.fill`/`exclamationmark.triangle.fill`, azul/verde/rojo) y el progreso vivía en un `ProgressRing` separado junto al `%` a la derecha, duplicando el concepto visual de "anillo" en dos lugares del mismo frame. Ahora hay un único anillo de progreso, en el mismo objeto que ya ocupaba el espacio del ícono izquierdo, replicando el lenguaje visual de `MenuBarIconRenderer` (flecha + anillo) — el frame se lee como el "hermano a color" de la menu bar. `ProgressRing.swift` se generaliza (gana un parámetro `diameter`) y gana un nuevo componente, `DownloadStateIcon`, que compone la flecha (`arrow.down`) sobre el ring; ninguno de los dos queda sin uso |
 | 2026-07-27 | Flecha del ícono de estado dibujada como Path con el mismo lineWidth del anillo | El peso del SF Symbol no coincidía con el trazo del aro — reporte del usuario. `DownloadStateIcon` sustituye `Image(systemName: "arrow.down")` por `DownloadArrow`, un `Shape` propio (asta + punta en "V") trazado con `StrokeStyle(lineWidth: Theme.Size.progressRingLineWidth, lineCap: .round, lineJoin: .round)` — el mismo token que usa `ProgressRing`, así el grosor es idéntico por construcción. Geometría proporcional al radio del `rect` (`halfHeight = radius × 0.42`, `armSpan = radius × 0.30`, `armDrop = radius × 0.34`), no hardcodeada para 20pt, así el componente sigue funcionando a cualquier diámetro. `MenuBarIconRenderer.progressRing(percent:)` tenía el mismo defecto (flecha a 1.6pt contra un anillo de 2pt) y se corrigió con la misma fórmula y el mismo `lineWidth` que el ring, para mantener los dos íconos coherentes |
+| 2026-07-28 | Check for Updates disponible en el menú principal de la app y en Settings, además del menú del status item | Pedido del usuario |
 
 ---
 
