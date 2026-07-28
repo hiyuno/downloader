@@ -36,6 +36,11 @@ enum Theme {
         static let progressRingLineWidth: CGFloat = 2
         static let menuBarIcon: CGFloat = 18
         static let rowAccessoryIcon: CGFloat = 12
+        /// Ancho reservado del accesorio derecho del frame (`.downloading`/`.completed`/`.error`)
+        /// — constante en los 3 estados para que el título nunca salte al aparecer/ocultarse
+        /// el % + ring o los botones de acción. Cubre el contenido más ancho posible: los
+        /// 2 botones de `.completed` (2×32pt + 2pt de separación).
+        static let rowTrailingAccessoryWidth: CGFloat = 66
         static let settings = CGSize(width: 480, height: 360)
     }
 
@@ -67,6 +72,14 @@ enum Theme {
         static let heightChange = Animation.spring(response: 0.35, dampingFraction: 1.0)
         static let rowStateCrossfade = Animation.easeOut(duration: 0.2)
         static let progressTick = Animation.linear(duration: 0.2)
+
+        /// Slide + fade del accesorio derecho del frame (% + ring / botones de acción,
+        /// DESIGN_LIQUID §Animaciones). Mismo token para entrada y salida — la asimetría
+        /// está en la secuencia (salida → entrada encadenada), no en la duración.
+        /// Reduce Motion reusa esta misma duración, solo cambia la transición geométrica
+        /// (move+opacity → opacity puro), igual patrón que el resto de esta tabla.
+        static let accessorySlideDuration: TimeInterval = 0.22
+        static let accessorySlide = Animation.easeOut(duration: accessorySlideDuration)
 
         static let panelAppearDuration: TimeInterval = 0.12
         static let panelDismissDuration: TimeInterval = 0.08

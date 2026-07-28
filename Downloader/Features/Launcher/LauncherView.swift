@@ -6,6 +6,13 @@ struct LauncherView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
+    /// Coreografía del accesorio derecho (DESIGN_LIQUID §Animaciones): estos dos flags
+    /// controlan la presencia del % + ring y de los botones de acción de forma
+    /// independiente del crossfade de ícono/título — permite que la salida del uno y
+    /// la entrada del otro queden encadenadas en vez de solaparse (ver `advanceToCompletedActions`).
+    @State private var showsProgressAccessory = false
+    @State private var showsCompletedActions = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             frame
@@ -27,9 +34,18 @@ struct LauncherView: View {
             viewModel.isVisible ? Theme.Motion.panelAppear : Theme.Motion.panelDismiss,
             value: viewModel.isVisible
         )
+        .onAppear {
+            syncAccessoryState(for: viewModel.frameState)
+        }
         .onChange(of: viewModel.frameState) { oldValue, newValue in
             guard let text = viewModel.announcement(from: oldValue, to: newValue) else { return }
             AccessibilityNotification.Announcement(text).post()
+        }
+        .onChange(of: viewModel.frameState) { _, newValue in
+            handleFrameStateChange(to: newValue)
+        }
+        .onChange(of: viewModel.downloadingPercent) { _, newValue in
+            handleProgressChange(to: newValue)
         }
     }
 
@@ -39,20 +55,115 @@ struct LauncherView: View {
         return viewModel.isVisible ? 1 : 0.96
     }
 
+    // MARK: - Coreografía del accesorio derecho
+
+    /// Estado inicial (montaje de la vista / reapertura del panel) — se fija sin animar,
+    /// nunca debe verse un slide de entrada para algo que ya estaba ahí antes de que el
+    /// usuario viera el frame por primera vez.
+    private func syncAccessoryState(for state: LauncherViewModel.FrameState) {
+        switch state {
+        case .downloading:
+            showsProgressAccessory = viewModel.downloadingPercent > 0
+            showsCompletedActions = false
+        case .completed:
+            showsProgressAccessory = false
+            showsCompletedActions = true
+        case .error, .input:
+            showsProgressAccessory = false
+            showsCompletedActions = false
+        }
+    }
+
+    /// Punto 2 de la coreografía: el primer progreso real (`percent` pasa de 0 a >0)
+    /// hace entrar el bloque [% + anillo] deslizando desde la derecha.
+    private func handleProgressChange(to newValue: Double) {
+        guard viewModel.frameState == .downloading else { return }
+        guard !showsProgressAccessory, newValue > 0 else { return }
+        withAnimation(accessoryAnimation) {
+            showsProgressAccessory = true
+        }
+    }
+
+    private func handleFrameStateChange(to newValue: LauncherViewModel.FrameState) {
+        switch newValue {
+        case .downloading:
+            // Descarga nueva (siempre se llega aquí vía `.input`) — reset instantáneo,
+            // sin animar: no hay nada visible todavía que deba "salir".
+            showsProgressAccessory = false
+            showsCompletedActions = false
+
+        case .completed:
+            advanceToCompletedActions()
+
+        case .error:
+            // Punto 5: el bloque sale, y el lado derecho queda vacío — nada entra.
+            hideProgressAccessory(completion: nil)
+            showsCompletedActions = false
+
+        case .input:
+            showsProgressAccessory = false
+            showsCompletedActions = false
+        }
+    }
+
+    /// Punto 3: encadenamiento secuencial estricto. Si el bloque de progreso estaba
+    /// visible, primero completa su salida y **solo entonces** — vía el `completion`
+    /// de `withAnimation(_:completion:)` (macOS 14+) — dispara la entrada de los
+    /// íconos de acción. Se prefiere esto a un `DispatchQueue.asyncAfter` con la
+    /// duración como número mágico: el completion handler está atado a la animación
+    /// real que corrió, no a una estimación de cuánto debería durar, así que no se
+    /// desincroniza si la duración del token cambia en el futuro.
+    private func advanceToCompletedActions() {
+        guard showsProgressAccessory else {
+            // El progreso nunca llegó a mostrarse (completó a 0% o instantáneo) —
+            // no hay nada que esperar, los botones entran directo.
+            withAnimation(accessoryAnimation) {
+                showsCompletedActions = true
+            }
+            return
+        }
+        hideProgressAccessory {
+            withAnimation(accessoryAnimation) {
+                showsCompletedActions = true
+            }
+        }
+    }
+
+    private func hideProgressAccessory(completion: (() -> Void)?) {
+        guard showsProgressAccessory else {
+            completion?()
+            return
+        }
+        withAnimation(accessoryAnimation) {
+            showsProgressAccessory = false
+        } completion: {
+            completion?()
+        }
+    }
+
+    private var accessoryAnimation: Animation {
+        Theme.Motion.accessorySlide
+    }
+
+    /// Reduce Motion (punto técnico pedido): mismo token de duración, se sustituye el
+    /// desplazamiento por un fade puro — el orden secuencial se mantiene igual.
+    private var accessoryTransition: AnyTransition {
+        reduceMotion ? .opacity : .move(edge: .trailing).combined(with: .opacity)
+    }
+
     // MARK: - El frame — máquina de estados única
 
     @ViewBuilder
     private var frame: some View {
         Group {
-            switch viewModel.frameState {
-            case .input: inputContent
-            case .downloading: downloadingContent
-            case .completed: completedContent
-            case .error: errorContent
+            if viewModel.frameState == .input {
+                inputContent
+                    .transition(.opacity)
+            } else {
+                statefulRow
+                    .transition(.opacity)
             }
         }
-        .id(viewModel.frameState)
-        .transition(.opacity)
         .padding(.horizontal, Theme.Spacing.inputHorizontalPadding)
         .frame(height: Theme.Spacing.inputRowHeight)
         .background(
@@ -116,57 +227,104 @@ struct LauncherView: View {
         .animation(Theme.Motion.rowStateCrossfade, value: viewModel.detectedSite)
     }
 
-    // MARK: - `.downloading`
+    // MARK: - `.downloading` / `.completed` / `.error` — fila con accesorio derecho desacoplado
 
-    private var downloadingContent: some View {
+    /// El ícono y el título del lado izquierdo siguen crossfadeando juntos como una
+    /// sola unidad al cambiar de estado (punto 4: el ícono nunca se desplaza, solo
+    /// cambia por opacity). El accesorio derecho vive fuera de ese `switch` — es la
+    /// misma vista persistente en los 3 estados, así que su entrada/salida no se ve
+    /// forzada a reiniciarse cada vez que cambia el estado del frame; solo la maneja
+    /// la coreografía explícita de arriba.
+    private var statefulRow: some View {
         HStack(spacing: Theme.Spacing.iconToText) {
-            Image(systemName: "arrow.down.circle")
-                .foregroundStyle(Color.accentColor)
-                .frame(width: Theme.Size.rowIcon, height: Theme.Size.rowIcon)
-
-            Text(viewModel.downloadingTitle)
-                .scaledFont(size: 13, weight: .regular)
-                .foregroundStyle(viewModel.downloadingTitleIsPlaceholder ? .secondary : .primary)
-                .lineLimit(1)
-                .truncationMode(.middle)
-
+            statefulLeading
             Spacer(minLength: 8)
-
-            HStack(spacing: 4) {
-                Text("\(Int(viewModel.downloadingPercent * 100))%")
-                    .scaledFont(size: 11, weight: .regular)
-                    .foregroundStyle(.white)
-                    .monospacedDigit()
-                    .accessibilityHidden(true)
-
-                ProgressRing(percent: viewModel.downloadingPercent)
-            }
+            trailingAccessorySlot
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(viewModel.downloadingTitle). Descargando, \(Int(viewModel.downloadingPercent * 100)) por ciento.")
     }
 
-    // MARK: - `.completed`
+    @ViewBuilder
+    private var statefulLeading: some View {
+        Group {
+            switch viewModel.frameState {
+            case .downloading:
+                HStack(spacing: Theme.Spacing.iconToText) {
+                    stateIcon(systemName: "arrow.down.circle", color: Color.accentColor)
+                    stateTitle(viewModel.downloadingTitle, color: viewModel.downloadingTitleIsPlaceholder ? .secondary : .primary)
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("\(viewModel.downloadingTitle). Descargando, \(Int(viewModel.downloadingPercent * 100)) por ciento.")
 
-    private var completedContent: some View {
-        HStack(spacing: Theme.Spacing.iconToText) {
-            HStack(spacing: Theme.Spacing.iconToText) {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
-                    .frame(width: Theme.Size.rowIcon, height: Theme.Size.rowIcon)
+            case .completed:
+                HStack(spacing: Theme.Spacing.iconToText) {
+                    stateIcon(systemName: "checkmark.circle.fill", color: .green)
+                    stateTitle(viewModel.completedTitle, color: .primary)
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("\(viewModel.completedTitle). Completado.")
 
-                Text(viewModel.completedTitle)
-                    .scaledFont(size: 13, weight: .regular)
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
+            case .error:
+                HStack(spacing: Theme.Spacing.iconToText) {
+                    stateIcon(systemName: "exclamationmark.triangle.fill", color: .red)
+                    stateTitle(viewModel.errorMessage, color: .red)
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Falló: \(viewModel.errorMessage).")
+                .accessibilityHint("Escribe o pega un nuevo link para continuar")
+
+            case .input:
+                EmptyView()
             }
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("\(viewModel.completedTitle). Completado.")
+        }
+        .id(viewModel.frameState)
+        .transition(.opacity)
+    }
 
-            Spacer(minLength: 8)
+    private func stateIcon(systemName: String, color: Color) -> some View {
+        Image(systemName: systemName)
+            .foregroundStyle(color)
+            .frame(width: Theme.Size.rowIcon, height: Theme.Size.rowIcon)
+    }
 
-            completedAccessories
+    private func stateTitle(_ text: String, color: Color) -> some View {
+        Text(text)
+            .scaledFont(size: 13, weight: .regular)
+            .foregroundStyle(color)
+            .lineLimit(1)
+            .truncationMode(.middle)
+    }
+
+    /// Ancho reservado fijo (`Theme.Size.rowTrailingAccessoryWidth`) para que el título
+    /// nunca salte de tamaño cuando el % + ring o los botones aparecen/desaparecen —
+    /// el espacio siempre está ahí, solo cambia si hay algo dibujado dentro.
+    @ViewBuilder
+    private var trailingAccessorySlot: some View {
+        ZStack(alignment: .trailing) {
+            if showsProgressAccessory {
+                progressAccessory
+                    .transition(accessoryTransition)
+            }
+            if showsCompletedActions {
+                completedAccessories
+                    .transition(accessoryTransition)
+            }
+        }
+        .frame(width: Theme.Size.rowTrailingAccessoryWidth, height: Theme.Size.rowIcon, alignment: .trailing)
+        // Cuando el accesorio es el % + ring (o está vacío), toda la información
+        // relevante ya está en el label combinado de `statefulLeading` — este slot no
+        // debe generar un segundo elemento de VoiceOver redundante. Solo en `.completed`
+        // los botones deben quedar navegables de forma independiente (Tab / VO).
+        .accessibilityHidden(viewModel.frameState != .completed)
+    }
+
+    private var progressAccessory: some View {
+        HStack(spacing: 4) {
+            Text("\(Int(viewModel.downloadingPercent * 100))%")
+                .scaledFont(size: 11, weight: .regular)
+                .foregroundStyle(.white)
+                .monospacedDigit()
+
+            ProgressRing(percent: viewModel.downloadingPercent)
         }
     }
 
@@ -211,27 +369,6 @@ struct LauncherView: View {
     private var destinationAppName: String? {
         guard let bundleID = AppSettings.destinationAppBundleID, !bundleID.isEmpty else { return nil }
         return FileOpenerService.name(forBundleIdentifier: bundleID)
-    }
-
-    // MARK: - `.error`
-
-    private var errorContent: some View {
-        HStack(spacing: Theme.Spacing.iconToText) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(.red)
-                .frame(width: Theme.Size.rowIcon, height: Theme.Size.rowIcon)
-
-            Text(viewModel.errorMessage)
-                .scaledFont(size: 13, weight: .regular)
-                .foregroundStyle(.red)
-                .lineLimit(1)
-                .truncationMode(.middle)
-
-            Spacer(minLength: 8)
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Falló: \(viewModel.errorMessage).")
-        .accessibilityHint("Escribe o pega un nuevo link para continuar")
     }
 }
 

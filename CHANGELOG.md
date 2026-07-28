@@ -7,7 +7,18 @@ y este proyecto usa [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-(sin cambios todavía)
+### Changed
+
+- **Transición más clara al descargar y al completar.** El panel ahora anima
+  con más intención el paso de "Preparando…" a la descarga en curso: el
+  porcentaje y el anillo de progreso dejan de aparecer prematuramente y
+  entran deslizándose apenas arranca el progreso real. Al completar la
+  descarga, ese mismo indicador se retira antes de que aparezcan los
+  accesos para abrir el archivo y revelarlo en Finder, evitando que todo
+  cambie de golpe. El ícono de estado a la izquierda pasa de flecha a check
+  con un fundido suave, sin saltos. Si ocurre un error, el indicador
+  simplemente se retira. Quienes tienen activado "Reducir movimiento" ven
+  la misma secuencia con fundidos en vez de deslizamientos.
 
 ## [1.1.0] - 2026-07-27
 
