@@ -7,6 +7,10 @@ y este proyecto usa [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+(sin cambios todavía)
+
+## [1.2.2] - 2026-08-24
+
 ### Fixed
 
 - **YouTube downloads working again.** A change on YouTube's side made every
