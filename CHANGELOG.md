@@ -7,7 +7,11 @@ y este proyecto usa [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-(sin cambios todavía)
+### Fixed
+
+- **YouTube downloads working again.** A change on YouTube's side made every
+  download fail with a 403 error, regardless of quality. Downloader's
+  download engine has been updated to fix this.
 
 ## [1.2.1] - 2026-07-28
 
