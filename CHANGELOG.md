@@ -7,6 +7,10 @@ y este proyecto usa [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+(sin cambios todavía)
+
+## [1.2.3] - 2026-08-24
+
 ### Fixed
 
 - **Live streams are now detected before downloading.** Pasting a link to a
