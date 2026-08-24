@@ -7,7 +7,17 @@ y este proyecto usa [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-(sin cambios todavía)
+### Fixed
+
+- **Live streams are now detected before downloading.** Pasting a link to a
+  YouTube live stream (or an upcoming premiere) now shows a clear message —
+  "This is a live stream — it can't be downloaded until it ends" — instead of
+  starting a download that would never finish. Streams that have already
+  ended download normally.
+- **No more leftover background processes after cancelling a download.**
+  Cancelling a download could previously leave a helper process running in
+  the background, still writing to disk and using system resources.
+  Cancelling now stops everything involved right away.
 
 ## [1.2.2] - 2026-08-24
 

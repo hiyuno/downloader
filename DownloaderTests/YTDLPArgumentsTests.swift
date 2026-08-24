@@ -61,4 +61,10 @@ struct YTDLPArgumentsTests {
         }
         #expect(arguments[arguments.index(after: index)] == "mp4")
     }
+
+    @Test("Pide el live_status en el stage 'video' — resuelve antes de bajar bytes, sin proceso extra")
+    func requestsLiveStatusAtVideoStage() {
+        let arguments = YTDLPService.arguments(for: task(), quality: .best)
+        #expect(arguments.contains("video:[live]%(live_status)s"))
+    }
 }

@@ -59,11 +59,48 @@ struct YTDLPProgressParsingTests {
     func messagesAreHumanReadable() {
         let reasons: [DownloadFailureReason] = [
             .unsupportedSite, .networkError, .siteBlockedOrChanged,
-            .invalidURL, .cancelled, .toolingUnavailable,
+            .invalidURL, .cancelled, .toolingUnavailable, .liveStream,
         ]
         for reason in reasons {
             #expect(!reason.message.isEmpty)
             #expect(!reason.message.contains("ERROR:"))
         }
+    }
+
+    // MARK: - LiveStreamStatus.blocksDownload — señal de `%(live_status)s`
+
+    @Test("is_live e is_upcoming bloquean la descarga")
+    func liveAndUpcomingBlockDownload() {
+        #expect(LiveStreamStatus.blocksDownload("is_live"))
+        #expect(LiveStreamStatus.blocksDownload("is_upcoming"))
+    }
+
+    @Test("was_live (directo ya terminado, ahora VOD) NO bloquea la descarga")
+    func wasLiveDoesNotBlockDownload() {
+        #expect(!LiveStreamStatus.blocksDownload("was_live"))
+    }
+
+    @Test("not_live (video normal) NO bloquea la descarga")
+    func notLiveDoesNotBlockDownload() {
+        #expect(!LiveStreamStatus.blocksDownload("not_live"))
+    }
+
+    @Test("post_live no está en la lista de bloqueo — solo is_live/is_upcoming bloquean")
+    func postLiveDoesNotBlockDownload() {
+        #expect(!LiveStreamStatus.blocksDownload("post_live"))
+    }
+
+    @Test("Tolera espacios y valores vacíos sin crashear")
+    func toleratesWhitespaceAndEmptyValues() {
+        #expect(LiveStreamStatus.blocksDownload("  is_live  "))
+        #expect(!LiveStreamStatus.blocksDownload(""))
+        #expect(!LiveStreamStatus.blocksDownload("NA"))
+    }
+
+    // MARK: - Parsing de la línea [live] en stdout (ver Marker.liveStatus)
+
+    @Test("La línea [live] no se confunde con [dl]/[title]/[file]")
+    func liveMarkerLineIsNotParsedAsProgress() {
+        #expect(DownloadProgress.parse("[live]is_live") == nil)
     }
 }

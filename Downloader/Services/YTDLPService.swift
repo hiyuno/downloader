@@ -6,6 +6,7 @@ enum YTDLPError: LocalizedError, Sendable {
     case launchFailed(String)
     case processFailed(status: Int32, stderr: String)
     case outputPathUnknown
+    case liveStream
 
     var errorDescription: String? {
         switch self {
@@ -17,6 +18,8 @@ enum YTDLPError: LocalizedError, Sendable {
             "yt-dlp exited with code \(status)."
         case .outputPathUnknown:
             "The download finished but the file path couldn't be determined."
+        case .liveStream:
+            "This is a live stream — it can't be downloaded until it ends."
         }
     }
 
@@ -26,6 +29,8 @@ enum YTDLPError: LocalizedError, Sendable {
             .toolingUnavailable
         case .outputPathUnknown:
             .siteBlockedOrChanged
+        case .liveStream:
+            .liveStream
         case .processFailed(let status, let stderr):
             status == SIGTERM + 128 || status == -15
                 ? .cancelled
@@ -99,6 +104,17 @@ actor YTDLPService {
                     let path = String(line.dropFirst(DownloadProgress.Marker.filePath.count))
                         .trimmingCharacters(in: .whitespaces)
                     if !path.isEmpty { collector.setFilePath(path) }
+                } else if line.hasPrefix(DownloadProgress.Marker.liveStatus) {
+                    let rawStatus = String(line.dropFirst(DownloadProgress.Marker.liveStatus.count))
+                        .trimmingCharacters(in: .whitespaces)
+                    if LiveStreamStatus.blocksDownload(rawStatus) {
+                        // Se detecta justo después de que yt-dlp resuelve el formato (stage "video",
+                        // antes de "before_dl") — todavía no bajó bytes. Se mata aquí mismo en vez
+                        // de esperar a que termine el proceso, porque un directo nunca termina solo.
+                        collector.markAsLiveStream()
+                        Self.terminateChildren(of: process.processIdentifier)
+                        process.terminate()
+                    }
                 }
             }
         }
@@ -124,6 +140,8 @@ actor YTDLPService {
         stdoutPipe.fileHandleForReading.readabilityHandler = nil
         stderrPipe.fileHandleForReading.readabilityHandler = nil
 
+        guard !collector.isLiveStream else { throw YTDLPError.liveStream }
+
         guard status == 0 else {
             let stderr = collector.stderrText
             Logger.ytdlp.error("yt-dlp falló (\(status)): \(stderr, privacy: .public)")
@@ -133,8 +151,22 @@ actor YTDLPService {
         return URL(fileURLWithPath: path)
     }
 
+    /// yt-dlp lanza ffmpeg como hijo para descargas HLS (streams en vivo, formatos fragmentados).
+    /// `Process.terminate()` sólo manda SIGTERM a yt-dlp — Python no reenvía la señal a sus hijos,
+    /// así que ffmpeg queda huérfano descargando indefinidamente si no lo matamos aparte.
     func cancel(taskID: UUID) {
-        runningProcesses[taskID]?.terminate()
+        guard let process = runningProcesses[taskID] else { return }
+        Self.terminateChildren(of: process.processIdentifier)
+        process.terminate()
+    }
+
+    private static func terminateChildren(of pid: pid_t) {
+        let pkill = Process()
+        pkill.executableURL = URL(fileURLWithPath: "/usr/bin/pkill")
+        pkill.arguments = ["-TERM", "-P", String(pid)]
+        pkill.standardOutput = FileHandle.nullDevice
+        pkill.standardError = FileHandle.nullDevice
+        try? pkill.run()
     }
 
     func embeddedVersion() async -> String? {
@@ -170,6 +202,10 @@ actor YTDLPService {
             "download:\(DownloadProgress.Marker.progress)%(progress._percent_str)s|%(progress._speed_str)s|%(progress._eta_str)s",
             "--print", "before_dl:\(DownloadProgress.Marker.title)%(title)s",
             "--print", "after_move:\(DownloadProgress.Marker.filePath)%(filepath)s",
+            // Stage "video": corre después de resolver el formato (-f) y antes de "before_dl" —
+            // llega a tiempo para abortar sin haber bajado un solo byte. Reusa el mismo proceso
+            // y el mismo stdout ya parseado en vez de una consulta de metadatos aparte.
+            "--print", "video:\(DownloadProgress.Marker.liveStatus)%(live_status)s",
         ]
         if let ffmpeg = BundledBinaries.url(for: .ffmpeg) {
             arguments.append(contentsOf: ["--ffmpeg-location", ffmpeg.path])
@@ -200,6 +236,7 @@ private final class OutputCollector: @unchecked Sendable {
     private var stderrBuffer = ""
     private var resolvedFilePath: String?
     private var resolvedTitle: String?
+    private var liveStreamDetected = false
 
     func appendStdout(_ data: Data) -> [String] {
         lock.lock()
@@ -233,12 +270,30 @@ private final class OutputCollector: @unchecked Sendable {
         lock.unlock()
     }
 
+    func markAsLiveStream() {
+        lock.lock()
+        liveStreamDetected = true
+        lock.unlock()
+    }
+
+    var isLiveStream: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return liveStreamDetected
+    }
+
     /// Lee lo que quedó en los pipes después de que el proceso terminó.
     func drain(stdout: Pipe, stderr: Pipe) {
         if let data = try? stdout.fileHandleForReading.readToEnd(), !data.isEmpty {
-            for line in appendStdout(data) where line.hasPrefix(DownloadProgress.Marker.filePath) {
-                setFilePath(String(line.dropFirst(DownloadProgress.Marker.filePath.count))
-                    .trimmingCharacters(in: .whitespaces))
+            for line in appendStdout(data) {
+                if line.hasPrefix(DownloadProgress.Marker.filePath) {
+                    setFilePath(String(line.dropFirst(DownloadProgress.Marker.filePath.count))
+                        .trimmingCharacters(in: .whitespaces))
+                } else if line.hasPrefix(DownloadProgress.Marker.liveStatus) {
+                    let rawStatus = String(line.dropFirst(DownloadProgress.Marker.liveStatus.count))
+                        .trimmingCharacters(in: .whitespaces)
+                    if LiveStreamStatus.blocksDownload(rawStatus) { markAsLiveStream() }
+                }
             }
         }
         if let data = try? stderr.fileHandleForReading.readToEnd(), !data.isEmpty {

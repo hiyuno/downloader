@@ -26,6 +26,7 @@ enum DownloadFailureReason: Sendable, Equatable {
     case invalidURL
     case cancelled
     case toolingUnavailable
+    case liveStream
 
     /// Nunca se muestra el enum crudo ni el stderr de yt-dlp sin traducir (DESIGN_LIQUID §2).
     var message: String {
@@ -36,6 +37,7 @@ enum DownloadFailureReason: Sendable, Equatable {
         case .invalidURL: "That link isn't valid"
         case .cancelled: "Cancelled"
         case .toolingUnavailable: "Download engine missing — check Resources/bin"
+        case .liveStream: "This is a live stream — it can't be downloaded until it ends"
         }
     }
 }

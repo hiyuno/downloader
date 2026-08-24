@@ -57,6 +57,18 @@ struct YTDLPErrorMappingTests {
         #expect(YTDLPError.outputPathUnknown.failureReason == .siteBlockedOrChanged)
     }
 
+    @Test("Un stream en vivo se mapea a .liveStream, nunca a .siteBlockedOrChanged")
+    func liveStreamMapsToItsOwnReason() {
+        #expect(YTDLPError.liveStream.failureReason == .liveStream)
+        #expect(YTDLPError.liveStream.failureReason != .siteBlockedOrChanged)
+    }
+
+    @Test("El mensaje de .liveStream es legible y distinto del de siteBlockedOrChanged")
+    func liveStreamMessageIsHumanReadable() {
+        #expect(DownloadFailureReason.liveStream.message == "This is a live stream — it can't be downloaded until it ends")
+        #expect(DownloadFailureReason.liveStream.message != DownloadFailureReason.siteBlockedOrChanged.message)
+    }
+
     // MARK: - classify(stderr:) — variantes reales de yt-dlp
 
     @Test("Clasifica variantes reales de mensajes de red")

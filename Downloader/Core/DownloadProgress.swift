@@ -14,6 +14,7 @@ struct DownloadProgress: Sendable, Equatable {
         static let progress = "[dl]"
         static let title = "[title]"
         static let filePath = "[file]"
+        static let liveStatus = "[live]"
     }
 
     static func parse(_ line: String) -> DownloadProgress? {
@@ -43,5 +44,15 @@ struct DownloadProgress: Sendable, Equatable {
         let value = raw.trimmingCharacters(in: .whitespaces)
         guard !value.isEmpty, value != "N/A", value != "NA", !value.lowercased().contains("unknown") else { return nil }
         return value
+    }
+}
+
+/// Interpreta el valor de `%(live_status)s` que yt-dlp imprime vía `Marker.liveStatus`.
+/// `was_live` (directo ya terminado, ahora VOD) y `not_live` (video normal) sí se pueden
+/// descargar — solo `is_live`/`is_upcoming` bloquean la descarga (TRD: nunca terminaría).
+enum LiveStreamStatus {
+    static func blocksDownload(_ rawValue: String) -> Bool {
+        let value = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        return value == "is_live" || value == "is_upcoming"
     }
 }
