@@ -7,7 +7,21 @@ y este proyecto usa [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-(sin cambios todavía)
+### Fixed
+
+- **Download engine failures no longer misreported as a site problem.** If
+  macOS rejects the bundled download engine (for example, an invalid code
+  signature), Downloader now correctly says the download engine is
+  unavailable instead of blaming the site.
+
+### Changed
+
+- **Updated the download engine (yt-dlp) to the latest version**, picking up
+  upstream fixes and site-compatibility updates.
+- **Left-clicking the menu bar icon now opens the launcher directly**;
+  right-click still shows the menu.
+- The "unrecognized site" warning chip now floats just below the input
+  panel instead of sitting inside it.
 
 ## [1.2.3] - 2026-08-24
 
