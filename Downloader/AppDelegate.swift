@@ -63,9 +63,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency SPUSta
 
     private func setUpStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        statusItem.button?.image = MenuBarIconRenderer.image(for: .idle)
-        statusItem.button?.toolTip = "Downloader — click to open the launcher (⌥⌘Space)"
-        statusItem.menu = buildMenu()
+        guard let button = statusItem.button else { return }
+        button.image = MenuBarIconRenderer.image(for: .idle)
+        button.toolTip = "Downloader — click to open the launcher (⌥⌘Space); right-click for options"
+        button.target = self
+        button.action = #selector(handleStatusItemClick(_:))
+        // El clic principal es la acción más frecuente (abrir el launcher). El menú
+        // queda reservado al clic contextual, sin competir con ese gesto inmediato.
+        button.sendAction(on: [.leftMouseUp, .rightMouseDown])
     }
 
     private func buildMenu() -> NSMenu {
@@ -221,6 +226,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency SPUSta
     }
 
     // MARK: - Acciones del menú
+
+    @objc private func handleStatusItemClick(_ sender: NSStatusBarButton) {
+        guard let event = NSApp.currentEvent else {
+            panelController.show()
+            return
+        }
+
+        if event.type == .rightMouseDown {
+            NSMenu.popUpContextMenu(buildMenu(), with: event, for: sender)
+        } else {
+            panelController.show()
+        }
+    }
 
     @objc private func openLauncher() {
         panelController.show()

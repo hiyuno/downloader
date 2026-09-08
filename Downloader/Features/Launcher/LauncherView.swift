@@ -14,19 +14,26 @@ struct LauncherView: View {
     @State private var showsCompletedActions = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.panelToChip) {
             frame
+                .padding(Theme.Spacing.panelPadding)
+                .frame(
+                    width: Theme.Size.panelWidth,
+                    height: Theme.Size.panelHeightBase,
+                    alignment: .top
+                )
+                .glassPanelBackground()
 
             if let chip = viewModel.chip {
-                Spacer().frame(height: Theme.Spacing.inputToChip)
                 InlineChip(kind: chip.kind, symbolName: chip.symbol, text: chip.text)
-                    .padding(.horizontal, Theme.Spacing.inputHorizontalPadding)
+                    .padding(
+                        .horizontal,
+                        Theme.Spacing.panelPadding + Theme.Spacing.inputHorizontalPadding
+                    )
                     .transition(.opacity)
             }
         }
-        .padding(Theme.Spacing.panelPadding)
         .frame(width: Theme.Size.panelWidth, height: viewModel.panelHeight, alignment: .top)
-        .glassPanelBackground()
         .opacity(viewModel.isVisible ? 1 : 0)
         .scaleEffect(scale)
         .animation(Theme.Motion.heightChange(reduceMotion: reduceMotion), value: viewModel.panelHeight)

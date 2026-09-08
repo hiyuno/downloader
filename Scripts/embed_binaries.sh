@@ -22,17 +22,12 @@ for tool in yt-dlp ffmpeg; do
   cp -f "${SOURCE_DIR}/${tool}" "${DEST_DIR}/${tool}"
   chmod +x "${DEST_DIR}/${tool}"
 
-  # Los binarios de terceros (yt-dlp/ffmpeg) llegan con su propia firma
-  # (ad-hoc o de su propio Team ID). Si no se elimina antes de re-firmar,
-  # el binario embebido queda con un Team ID distinto al del proceso que
-  # lo carga (nuestro .app), y dyld/AMFI lo rechaza en runtime:
-  #   "code signature not valid... different Team IDs".
-  # Solución: quitar siempre la firma original y volver a firmar con la
-  # MISMA identidad que usará el resto del bundle, sea ad-hoc ("-") o una
-  # identidad real de Developer ID/Distribution.
-  codesign --remove-signature "${DEST_DIR}/${tool}" 2>/dev/null || true
-
   if [ "${CODE_SIGNING_ALLOWED:-YES}" = "YES" ]; then
+    # Los binarios de terceros llegan con su propia firma. Solo la quitamos
+    # cuando podemos reemplazarla inmediatamente: dejar una copia sin firma
+    # hace que AMFI la mate con SIGKILL al lanzarla desde el bundle.
+    codesign --remove-signature "${DEST_DIR}/${tool}" 2>/dev/null || true
+
     # EXPANDED_CODE_SIGN_IDENTITY viene vacío cuando CODE_SIGN_IDENTITY="-"
     # (ad-hoc), así que hay que caer de vuelta a "-" en ese caso en vez de
     # saltarse la firma por completo.
@@ -48,13 +43,20 @@ for tool in yt-dlp ffmpeg; do
       timestamp_flag="--timestamp"
     fi
 
-    codesign --force --options runtime ${timestamp_flag} \
+    if ! codesign --force --options runtime ${timestamp_flag} \
       --entitlements "${SRCROOT}/Downloader/Downloader.entitlements" \
       --sign "${sign_identity}" \
-      "${DEST_DIR}/${tool}" \
-      || echo "warning: no se pudo firmar ${tool}"
+      "${DEST_DIR}/${tool}"; then
+      echo "error: no se pudo firmar ${tool}; se detiene el build para no crear una app inutilizable"
+      exit 1
+    fi
+
+    if ! codesign --verify --strict "${DEST_DIR}/${tool}"; then
+      echo "error: la firma de ${tool} no es válida"
+      exit 1
+    fi
   else
-    echo "note: firma deshabilitada (CODE_SIGNING_ALLOWED=NO) — ${tool} queda sin firmar"
+    echo "note: firma deshabilitada (CODE_SIGNING_ALLOWED=NO) — se conserva la firma original de ${tool}"
   fi
 done
 

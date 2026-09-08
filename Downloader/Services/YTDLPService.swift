@@ -26,15 +26,19 @@ enum YTDLPError: LocalizedError, Sendable {
     var failureReason: DownloadFailureReason {
         switch self {
         case .binaryMissing, .launchFailed:
-            .toolingUnavailable
+            return .toolingUnavailable
         case .outputPathUnknown:
-            .siteBlockedOrChanged
+            return .siteBlockedOrChanged
         case .liveStream:
-            .liveStream
+            return .liveStream
         case .processFailed(let status, let stderr):
-            status == SIGTERM + 128 || status == -15
-                ? .cancelled
-                : DownloadFailureReason.classify(stderr: stderr)
+            if status == SIGTERM + 128 || status == -15 { return .cancelled }
+            // `Process.terminationStatus` contiene el número de señal cuando el
+            // hijo termina por una señal. macOS usa SIGKILL (9) al rechazar un
+            // ejecutable embebido con firma inválida o ausente: es un fallo del
+            // motor empaquetado, nunca evidencia de que el sitio haya cambiado.
+            if status == SIGKILL { return .toolingUnavailable }
+            return DownloadFailureReason.classify(stderr: stderr)
         }
     }
 }

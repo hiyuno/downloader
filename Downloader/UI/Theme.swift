@@ -17,7 +17,7 @@ enum Theme {
         static let inputRowHeight: CGFloat = 52
         static let inputHorizontalPadding: CGFloat = 16
         static let iconToText: CGFloat = 10
-        static let inputToChip: CGFloat = 6
+        static let panelToChip: CGFloat = 6
         static let chipHeight: CGFloat = 22
         static let settingsSectionPadding: CGFloat = 16
         static let betweenSettingsSections: CGFloat = 20
@@ -27,9 +27,10 @@ enum Theme {
 
     enum Size {
         static let panelWidth: CGFloat = 560
-        /// Único frame, sin lista — DESIGN_LIQUID §1: solo dos alturas de panel posibles.
+        /// Superficie principal fija (6pt + 52pt + 6pt).
         static let panelHeightBase: CGFloat = 64
-        static let panelHeightWithChip: CGFloat = 86
+        /// La cápsula flota fuera de la superficie principal: 64 + 6 de separación + 22.
+        static let panelHeightWithChip: CGFloat = 92
         static let rowIcon: CGFloat = 20
         static let siteIcon: CGFloat = 16
         static let progressRing: CGFloat = 18

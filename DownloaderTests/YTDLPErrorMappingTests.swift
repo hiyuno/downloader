@@ -22,6 +22,12 @@ struct YTDLPErrorMappingTests {
         #expect(error.failureReason == .cancelled)
     }
 
+    @Test("SIGKILL (9) se reporta como fallo del motor, no como cambio del sitio")
+    func sigkillMapsToToolingUnavailable() {
+        let error = YTDLPError.processFailed(status: SIGKILL, stderr: "")
+        #expect(error.failureReason == .toolingUnavailable)
+    }
+
     @Test("Cancelación tiene prioridad sobre el contenido del stderr")
     func cancellationTakesPriorityOverStderrContent() {
         // Si el proceso murió por señal, no debería importar que el stderr también
